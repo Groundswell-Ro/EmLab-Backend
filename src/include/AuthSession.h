@@ -1,0 +1,52 @@
+#pragma once
+#include "../../../comunication/AuthModule.h"
+
+#include <Wt/Auth/Dbo/UserDatabase.h>
+
+#include <Wt/Dbo/SqlConnection.h>
+
+#include <Wt/WString.h>
+
+#include <Wt/Dbo/Session.h>
+#include <Wt/Dbo/ptr.h>
+#include "DboTables.h"
+
+namespace dbo = Wt::Dbo;
+using namespace AuthModule;
+using AuthInfo = Wt::Auth::Dbo::AuthInfo<User>;
+
+// using AuthInfo = Wt::Auth::Dbo::AuthInfo<User>; defined in User.h
+using UserDatabase = Wt::Auth::Dbo::UserDatabase<AuthInfo>;
+
+class AuthSession
+{
+public:
+    AuthSession(std::unique_ptr<dbo::SqlConnection> conn);
+    ~AuthSession();
+
+    static void configureAuth();
+    void configureSession();
+
+    // functions used to manadge user services
+    void addUserService(Wt::WString userToken, ServiceInfo userServiceInfo);
+    void removeUserService(Wt::WString userToken, int userServiceId);
+    void updateUserService(Wt::WString userToken, ServiceInfo userServiceInfo);
+
+    // functions used by auth interface
+    StructLoginReturn tryLoginUser(StructLoginInfo structLoginInfo);
+    StructRegistrationReturn tryRegisterNewUser(StructRegistrationInfo structRegistrationInfo);
+    int processUserTokenForId(Wt::WString userToken);
+    Wt::WString processUserTokenForName(Wt::WString userToken);
+    AuthModule::ServiceInfoSq processUserTokenForServices(Wt::WString userToken);
+    AuthModule::UserServices processUserNameForServices(Wt::WString userName);
+
+    ChangePasswordResponse tryChangePassword(Wt::WString userToken, Wt::WString oldPassword, Wt::WString newPassword);
+
+    Wt::Auth::AbstractUserDatabase &users();
+    static const Wt::Auth::AuthService &auth();
+    static const Wt::Auth::AbstractPasswordService &passwordAuth();
+
+private:
+    mutable Wt::Dbo::Session session_;
+    std::unique_ptr<UserDatabase> users_;
+};

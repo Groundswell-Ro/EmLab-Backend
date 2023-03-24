@@ -1,0 +1,2 @@
+EventManagetAdapter
+default -p 10000
