@@ -12,17 +12,17 @@ class AuthInterfaceI : public AuthInterface
 public:
 	AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn);
 
-	virtual StructLoginReturn tryLogin(StructLoginInfo structLoginInfo, const Ice::Current &) override;
-	virtual StructRegistrationReturn tryRegister(StructRegistrationInfo structRegistrationInfo, const Ice::Current &) override;
-	virtual ChangePasswordResponse tryChangePassword(string userToken, string oldPassword, string newPassword, const Ice::Current &) override;
+	virtual LoginReturn loginUser(LoginInfo loginInfo, const Ice::Current &) override;
+	virtual RegistrationResponse registerUser(RegistrationInfo registrationInfo, const Ice::Current &) override;
+	virtual ChangePasswordResponse changePassword(string userToken, string oldPassword, string newPassword, const Ice::Current &) override;
 
 	virtual string getUserName(string userToken, const Ice::Current &) override;
 
 	virtual void addUserService(string userToken, ServiceInfo userServiceInfo, const Ice::Current &) override;
 	virtual void removeUserService(string userToken, int userServiceId, const Ice::Current &) override;
 	virtual void updateUserService(string userToken, ServiceInfo userServiceInfo, const Ice::Current &) override;
-	virtual ServiceInfoSq getSelfServices(string userToken, const Ice::Current &) override;
-	virtual AuthModule::UserServices getUserServicesFromUserName(string userName, const Ice::Current &) override;
+	virtual ServicesInfoSq getSelfServices(string userToken, const Ice::Current &) override;
+	virtual AuthModule::UserServices getUserServicesByEmail(string email, const Ice::Current &) override;
 
 	AuthSession authSession_;
 

@@ -82,98 +82,84 @@ void AuthSession::configureSession()
 	transaction.commit();
 }
 
-StructRegistrationReturn AuthSession::tryRegisterNewUser(StructRegistrationInfo structRegistrationInfo)
+RegistrationResponse AuthSession::registerNewUser(RegistrationInfo registrationInfo)
 {
 	dbo::Transaction transaction(session_);
 
-	// RETURNED RegistrationReturnUserData Object
-	StructRegistrationReturn resultUser;
-	resultUser.structLoginReturn.userName = structRegistrationInfo.userName;
-	resultUser.structLoginReturn.loginResponse = LoginResponse::NotIdentified;
-	resultUser.structLoginReturn.userToken = "";
+	auto userFoundByEmail = users_->findWithEmail(registrationInfo.email);
 
-	auto userAlreadyExist = users_->findWithEmail(structRegistrationInfo.structLoginInfo.userEmail);
-	if (userAlreadyExist.isValid())
+	if (userFoundByEmail.isValid())
 	{
-
-		std::cout << "\n\n User Alredy exists in dbo \n\n";
-		resultUser.registrationResponse = RegistrationResponse::UserEmailAlreadyExists;
-		resultUser.structLoginReturn.loginResponse = LoginResponse::Identified;
-		resultUser.structLoginReturn.userName = userAlreadyExist.identity(Auth::Identity::LoginName).toUTF8();
-
-		return resultUser;
+		std::cout << "\n\n User Email Alredy exists in dbo \n\n";
+		return RegistrationResponse::EmailAlreadyExists;
 	}
 
+	// Create a new User in User table
 	std::unique_ptr<User> newUserPtr{new User()};
-	newUserPtr->name = structRegistrationInfo.userName;
+	newUserPtr->name = registrationInfo.name;
+	newUserPtr->phone = registrationInfo.phone;
 	dbo::ptr<User> userPtr = session_.add(std::move(newUserPtr));
 
 	// Crteate a new AuthInfo record and returns a Wt::Auth::User
 	auto newUser = users_->registerNew();
-	// Create a new User
 	auto userInfo = users_->find(newUser);
 	userInfo.modify()->setUser(userPtr);
-	newUser.setIdentity(Auth::Identity::LoginName, structRegistrationInfo.structLoginInfo.userEmail);
-	newUser.setEmail(structRegistrationInfo.structLoginInfo.userEmail);
-	myPasswordService.updatePassword(newUser, structRegistrationInfo.structLoginInfo.userPassword);
-	auto token = auth().createAuthToken(newUser);
-
-	resultUser.structLoginReturn.loginResponse = LoginResponse::LoggedIn;
-	resultUser.structLoginReturn.userToken = token;
-	resultUser.registrationResponse = RegistrationResponse::UserRegistrationSuccessful;
-
+	newUser.setIdentity(Auth::Identity::LoginName, registrationInfo.email);
+	newUser.setEmail(registrationInfo.email);
+	myPasswordService.updatePassword(newUser, registrationInfo.password);
 	transaction.commit();
 
-	return resultUser;
+	return AuthModule::RegistrationResponse::RegistrationSuccessful;
 }
 
-StructLoginReturn AuthSession::tryLoginUser(StructLoginInfo structLoginInfo)
+LoginReturn AuthSession::logUserIn(LoginInfo loginInfo)
 {
-	// // RETURNED LoginReturnUserData Obj;
-	StructLoginReturn resultUser;
-	resultUser.loginResponse = LoginResponse::NotIdentified;
-	resultUser.userName = "";
-	resultUser.userToken = "";
+	// RETURNED LoginReturnUserData Obj;
+	LoginReturn loginReturn;
+	loginReturn.loginResponse = LoginResponse::NotIdentified;
+	loginReturn.name = "";
+	loginReturn.token = "";
 
 	dbo::Transaction transaction(session_);
 
-	auto user = users().findWithEmail(structLoginInfo.userEmail);
+	auto user = users().findWithEmail(loginInfo.email);
 
 	if (user.isValid())
 	{
-		resultUser.loginResponse = LoginResponse::Identified;
-		resultUser.userName = session_.find<User>().where("id = ?").bind(user.id()).resultValue()->name;
+		loginReturn.loginResponse = LoginResponse::Identified;
+		loginReturn.name = session_.find<User>().where("id = ?").bind(user.id()).resultValue()->name;
 
-		auto userToken = "";
+		auto passwordResult = myPasswordService.verifyPassword(user, loginInfo.password);
 
-		auto passwordResult = myPasswordService.verifyPassword(user, structLoginInfo.userPassword);
 		if (passwordResult == Wt::Auth::PasswordResult::PasswordInvalid)
 		{
-			resultUser.userToken = Wt::WString(userToken).toUTF8();
-			resultUser.loginResponse = LoginResponse::IncorectPassword;
+			loginReturn.loginResponse = LoginResponse::IncorectPassword;
 		}
 		else if (passwordResult == Wt::Auth::PasswordResult::LoginThrottling)
 		{
-			resultUser.loginResponse = LoginResponse::ThrottlingActivated;
+			loginReturn.loginResponse = LoginResponse::ThrottlingActivated;
 		}
 		else if (passwordResult == Wt::Auth::PasswordResult::PasswordValid)
 		{
-			auto userToken = auth().createAuthToken(user);
-			resultUser.userToken = Wt::WString(userToken).toUTF8();
-			resultUser.loginResponse = LoginResponse::LoggedIn;
+			loginReturn.token = auth().createAuthToken(user);
+			std::cout << "\n\n ------------------ processUserTokenForServices ------------------ \n\n";
+			loginReturn.servicesInfoSq = processUserTokenForServices(loginReturn.token);
+			std::cout << "\n\n ------------------ processUserTokenForServices ------------------ \n\n";
+			loginReturn.loginResponse = LoginResponse::LoggedIn;
 		}
 	}
 	else
 	{
 		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
 	}
+
 	transaction.commit();
-	return resultUser;
+	return loginReturn;
 }
 
-AuthModule::ServiceInfoSq AuthSession::processUserTokenForServices(Wt::WString userToken)
+AuthModule::ServicesInfoSq AuthSession::processUserTokenForServices(Wt::WString userToken)
 {
-	AuthModule::ServiceInfoSq serviceInfoSq;
+	AuthModule::ServicesInfoSq servicesInfoSq;
 
 	dbo::Transaction transaction(session_);
 
@@ -191,37 +177,40 @@ AuthModule::ServiceInfoSq AuthSession::processUserTokenForServices(Wt::WString u
 		structUserServiceInfo.description = userService->description;
 		structUserServiceInfo.price = std::stoi(userService->price);
 
-		serviceInfoSq.push_back(structUserServiceInfo);
+		servicesInfoSq.push_back(structUserServiceInfo);
 	}
 
 	transaction.commit();
 
-	return serviceInfoSq;
+	return servicesInfoSq;
 }
 
-AuthModule::UserServices AuthSession::processUserNameForServices(Wt::WString userName)
+AuthModule::UserServices AuthSession::processUserEmailForServices(Wt::WString email)
 {
 	AuthModule::UserServices userServices;
-	userServices.userName = userName.toUTF8();
 
 	dbo::Transaction transaction(session_);
 
-	auto user = session_.find<User>().where("name = ?").bind(userName.toUTF8()).resultValue();
+	auto user = users_->findWithEmail(email.toUTF8());
 
-	auto userServicesPtr = user->userServices;
-
-	for (Wt::Dbo::ptr<UserService> &userService : userServicesPtr)
+	if (user.isValid())
 	{
-		AuthModule::ServiceInfo structUserServiceInfo;
+		dbo::ptr<User> userPtr = session_.find<User>().where("id = ?").bind(user.id());
 
-		structUserServiceInfo.id = userService.id();
-		structUserServiceInfo.title = userService->title;
-		structUserServiceInfo.description = userService->description;
-		structUserServiceInfo.price = std::stoi(userService->price);
+		auto userServicesPtr = userPtr->userServices;
 
-		userServices.userServices.push_back(structUserServiceInfo);
+		for (Wt::Dbo::ptr<UserService> &userService : userServicesPtr)
+		{
+			AuthModule::ServiceInfo serviceInfo;
+
+			serviceInfo.id = userService.id();
+			serviceInfo.title = userService->title;
+			serviceInfo.description = userService->description;
+			serviceInfo.price = std::stoi(userService->price);
+
+			userServices.servicesInfoSq.push_back(serviceInfo);
+		}
 	}
-
 	return userServices;
 }
 
@@ -269,7 +258,7 @@ int AuthSession::processUserTokenForId(Wt::WString userToken)
 	return userId;
 }
 
-ChangePasswordResponse AuthSession::tryChangePassword(Wt::WString userToken, Wt::WString oldPassword, Wt::WString newPassword)
+ChangePasswordResponse AuthSession::changeUserPassword(Wt::WString userToken, Wt::WString oldPassword, Wt::WString newPassword)
 {
 	ChangePasswordResponse changePasswordResponse = ChangePasswordResponse::PasswordNotChanged;
 

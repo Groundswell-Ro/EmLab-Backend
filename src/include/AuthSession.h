@@ -33,14 +33,14 @@ public:
     void updateUserService(Wt::WString userToken, ServiceInfo userServiceInfo);
 
     // functions used by auth interface
-    StructLoginReturn tryLoginUser(StructLoginInfo structLoginInfo);
-    StructRegistrationReturn tryRegisterNewUser(StructRegistrationInfo structRegistrationInfo);
+    LoginReturn logUserIn(LoginInfo loginInfo);
+    RegistrationResponse registerNewUser(RegistrationInfo registrationInfo);
     int processUserTokenForId(Wt::WString userToken);
     Wt::WString processUserTokenForName(Wt::WString userToken);
-    AuthModule::ServiceInfoSq processUserTokenForServices(Wt::WString userToken);
-    AuthModule::UserServices processUserNameForServices(Wt::WString userName);
+    AuthModule::ServicesInfoSq processUserTokenForServices(Wt::WString userToken);
+    AuthModule::UserServices processUserEmailForServices(Wt::WString email);
 
-    ChangePasswordResponse tryChangePassword(Wt::WString userToken, Wt::WString oldPassword, Wt::WString newPassword);
+    ChangePasswordResponse changeUserPassword(Wt::WString userToken, Wt::WString oldPassword, Wt::WString newPassword);
 
     Wt::Auth::AbstractUserDatabase &users();
     static const Wt::Auth::AuthService &auth();

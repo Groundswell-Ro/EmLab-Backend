@@ -5,17 +5,14 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 {
 }
 
-StructLoginReturn AuthInterfaceI::tryLogin(StructLoginInfo structLoginInfo, const Ice::Current &)
+LoginReturn AuthInterfaceI::loginUser(LoginInfo loginInfo, const Ice::Current &)
 {
-	StructLoginReturn userResponse = authSession_.tryLoginUser(structLoginInfo);
-	return userResponse;
+	return authSession_.logUserIn(loginInfo);
 }
 
-StructRegistrationReturn AuthInterfaceI::tryRegister(StructRegistrationInfo structRegistrationInfo, const Ice::Current &)
+RegistrationResponse AuthInterfaceI::registerUser(RegistrationInfo registrationInfo, const Ice::Current &)
 {
-	StructRegistrationReturn userResponse;
-	userResponse = authSession_.tryRegisterNewUser(structRegistrationInfo);
-	return userResponse;
+	return authSession_.registerNewUser(registrationInfo);
 }
 
 string AuthInterfaceI::getUserName(string userToken, const Ice::Current &)
@@ -25,9 +22,9 @@ string AuthInterfaceI::getUserName(string userToken, const Ice::Current &)
 	return userName;
 }
 
-ChangePasswordResponse AuthInterfaceI::tryChangePassword(string userToken, string oldPassword, string newPassword, const Ice::Current &)
+ChangePasswordResponse AuthInterfaceI::changePassword(string userToken, string oldPassword, string newPassword, const Ice::Current &)
 {
-	return authSession_.tryChangePassword(userToken, oldPassword, newPassword);
+	return authSession_.changeUserPassword(userToken, oldPassword, newPassword);
 }
 
 void AuthInterfaceI::addUserService(string userToken, ServiceInfo userServiceInfo, const Ice::Current &)
@@ -45,12 +42,12 @@ void AuthInterfaceI::updateUserService(string userToken, ServiceInfo userService
 	authSession_.updateUserService(userToken, userServiceInfo);
 }
 
-AuthModule::ServiceInfoSq AuthInterfaceI::getSelfServices(string userToken, const Ice::Current &)
+ServicesInfoSq AuthInterfaceI::getSelfServices(string userToken, const Ice::Current &)
 {
 	return authSession_.processUserTokenForServices(userToken);
 }
 
-AuthModule::UserServices AuthInterfaceI::getUserServicesFromUserName(string userName, const Ice::Current &)
+AuthModule::UserServices AuthInterfaceI::getUserServicesByEmail(string email, const Ice::Current &)
 {
-	return authSession_.processUserNameForServices(userName);
+	return authSession_.processUserEmailForServices(email);
 }
