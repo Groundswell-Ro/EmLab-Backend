@@ -13,4 +13,3 @@ ls
 scp backend evntmgr@tstback:./
 scp comunication.txt evntmgr@tstback:./
 scp makefile evntmgr@tstback:./
-scp dbo-connection.txt evntmgr@tstback:./

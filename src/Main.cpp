@@ -10,7 +10,7 @@
 int main(int argc, char *argv[])
 {
 
-	ifstream dboConnFile("../dbo-connection.txt");
+	ifstream dboConnFile("/etc/evntmgr/dbo-connection.txt");
 	ifstream connFile("comunication.txt");
 
 	if (!dboConnFile)
