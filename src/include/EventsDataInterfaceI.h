@@ -22,7 +22,7 @@ public:
 
 	virtual EventDataPack getEventData(string userToken, int eventId, const Ice::Current &) override;
 	virtual SeqEventDataPack getTenEvents(string userToken, int offset, const Ice::Current &) override; // not finished
-	virtual void registerEvent(string userToken, EventDataPack eventDataPack, const Ice::Current &) override;
+	virtual EventDataModule::EventDataPack registerEvent(string userToken, EventDataPack eventDataPack, const Ice::Current &) override;
 
 	virtual void modifyEventStringField(string userToken, int eventId, EventField field, string newValue, const Ice::Current &) override;
 	virtual void modifyEventIntField(string userToken, int eventId, EventField field, int newValue, const Ice::Current &) override;

@@ -12,10 +12,12 @@ SeqEventDataPack EventsDataInterfaceI::getEventsData(string userToken, const Ice
 	return eventsDataSession_.getAllEvents(userId);
 }
 
-void EventsDataInterfaceI::registerEvent(string userToken, EventDataPack eventDataPack, const Ice::Current &)
+EventDataModule::EventDataPack EventsDataInterfaceI::registerEvent(string userToken, EventDataPack eventDataPack, const Ice::Current &)
 {
 
 	int userId = authInterface_->authSession_.processUserTokenForId(userToken);
+	if (eventDataPack.clientData.id == 0)
+		eventDataPack.clientData.id = eventsDataSession_.regClientData(userId, eventDataPack.clientData);
 
 	int eventID = eventsDataSession_.regEventData(userId, eventDataPack.clientData.id, eventDataPack.eventData);
 
@@ -25,6 +27,8 @@ void EventsDataInterfaceI::registerEvent(string userToken, EventDataPack eventDa
 		serviceData.eventId = eventID;
 		eventsDataSession_.addServiceData(serviceData);
 	}
+
+	return eventsDataSession_.getEventData(eventID);
 }
 
 void EventsDataInterfaceI::modifyEventIntField(string userToken, int eventId, EventField field, int newValue, const Ice::Current &)
