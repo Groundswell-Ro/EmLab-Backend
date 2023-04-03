@@ -118,6 +118,7 @@ LoginReturn AuthSession::logUserIn(LoginInfo loginInfo)
 	LoginReturn loginReturn;
 	loginReturn.loginResponse = LoginResponse::NotIdentified;
 	loginReturn.name = "";
+	loginReturn.email = loginInfo.email;
 	loginReturn.token = "";
 
 	dbo::Transaction transaction(session_);
