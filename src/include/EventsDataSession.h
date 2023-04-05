@@ -29,10 +29,10 @@ public:
     void modifyServiceDoubleField(int serviceId, EventDataModule::ServiceField field, double newValue);
 
     EventDataModule::SeqEventDataPack getAllEvents(int userId);
+    EventDataModule::SeqEventDataPack getTenEvents(int userId, std::string fromDate, int offset);
     EventDataModule::SeqClients getAllClients(int userId);
     EventDataModule::SeqClients getClientsByName(int userId, std::string partialName);
     EventDataModule::SeqClients getClientsByPhone(int userId, std::string partialPhone);
-    EventDataModule::SeqEventDataPack getTenEvents(int userId, int offset);
     EventDataModule::EventDataPack getEventData(int eventId);
     void deleteRecord(EventDataModule::Table table, int id);
 

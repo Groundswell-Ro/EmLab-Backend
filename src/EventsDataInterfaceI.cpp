@@ -103,11 +103,11 @@ SeqClients EventsDataInterfaceI::getClientsByPhone(string userToken, string part
 	return eventsDataSession_.getClientsByPhone(userId, partialPhone);
 }
 
-SeqEventDataPack EventsDataInterfaceI::getTenEvents(string userToken, int offset, const Ice::Current &)
+SeqEventDataPack EventsDataInterfaceI::getTenEvents(string userToken, string fromDate, int offset, const Ice::Current &)
 {
 	int userId = authInterface_->authSession_.processUserTokenForId(userToken);
 
-	SeqEventDataPack seqEventDataPack = eventsDataSession_.getTenEvents(userId, offset);
+	SeqEventDataPack seqEventDataPack = eventsDataSession_.getTenEvents(userId, fromDate, offset);
 	return seqEventDataPack;
 }
 

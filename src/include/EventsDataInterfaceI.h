@@ -21,7 +21,7 @@ public:
 	virtual SeqClients getClientsByPhone(string userToken, string partialPhone, const Ice::Current &) override;
 
 	virtual EventDataPack getEventData(string userToken, int eventId, const Ice::Current &) override;
-	virtual SeqEventDataPack getTenEvents(string userToken, int offset, const Ice::Current &) override; // not finished
+	virtual SeqEventDataPack getTenEvents(string userToken, string fromDate, int offset, const Ice::Current &) override; // not finished
 	virtual EventDataModule::EventDataPack registerEvent(string userToken, EventDataPack eventDataPack, const Ice::Current &) override;
 
 	virtual void modifyEventStringField(string userToken, int eventId, EventField field, string newValue, const Ice::Current &) override;

@@ -422,18 +422,28 @@ void EventsDataSession::modifyEventStringField(int eventId, EventDataModule::Eve
 	transaction.commit();
 }
 
-EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, int offset)
+EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, std::string fromDate, int offset)
 {
-	dbo::Transaction transaction(session_);
+	// Events eventsCollection = session_.find<Event>().where("user_id = ?").bind(userId).orderBy("id DESC").limit(10).offset(offset);
 	EventDataModule::SeqEventDataPack seqEventDataPack;
 
-	Events eventsCollection = session_.find<Event>().where("user_id = ?").bind(userId).orderBy("id DESC").limit(10).offset(offset);
+	dbo::Transaction transaction(session_);
+	auto dateTime = Wt::WDateTime().fromString(fromDate, "dd/MM/yyyy");
 
+	auto eventsQuery = session_.find<Event>();
+	eventsQuery.where("user_id = ?").bind(userId);
+	eventsQuery.where("date_time > ?").bind(dateTime.toTimePoint());
+	eventsQuery.where("date_time < ?").bind(dateTime.addDays(1).toTimePoint());
+	eventsQuery.orderBy("date_time ASC");
+	eventsQuery.limit(10);
+	eventsQuery.offset(offset);
+	
+	Events eventsCollection = eventsQuery.resultList();
+
+	// Events eventsCollection = session_.find<Event>().where("user_id = ?").orderBy("date_time DESC").bind(userId).limit(10).offset(offset);
 	for (const dbo::ptr<Event> &event : eventsCollection)
 	{
-
 		EventDataModule::EventDataPack eventDataPack;
-
 		auto eventDateTime = Wt::WDateTime(event->dateTime);
 
 		eventDataPack.eventData.id = event->id();
@@ -443,7 +453,13 @@ EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, in
 		eventDataPack.eventData.location = event->location;
 		eventDataPack.eventData.observations = event->observations;
 
-		for (const dbo::ptr<Service> &serviceDb : event->services)
+		eventDataPack.clientData.name = event->client->name;
+		eventDataPack.clientData.phone = event->client->phone;
+		eventDataPack.clientData.specialNote = event->client->specialNote;
+
+		Services services = session_.find<Service>().where("event_id = ?").orderBy("date_time DESC").bind(event->id());
+
+		for (const dbo::ptr<Service> serviceDb : event->services)
 		{
 			EventDataModule::ServiceData service;
 
@@ -454,16 +470,19 @@ EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, in
 			service.providerIdentity = serviceDb->providerIdentity;
 			service.providerService = serviceDb->providerService;
 			service.dateTime = serviceDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
-			service.duration = serviceDb->duration;
 			service.cost = serviceDb->cost;
+			service.duration = serviceDb->duration;
 			service.description = serviceDb->description;
 			service.observations = serviceDb->observations;
 
 			eventDataPack.seqServices.push_back(service);
 		}
+
+		seqEventDataPack.push_back(eventDataPack);
 	}
 
 	transaction.commit();
+
 	return seqEventDataPack;
 }
 
