@@ -10,7 +10,9 @@ CMMDIR = ../comunication
 OBJDIR = ./src/obj
 
 # Linking lib
-LDFLAGS = -lwt -lwtdbo -lwtdbopostgres -lIce++11
+LDFLAGS = -lwt -lwtdbo -lwtdbosqlite3 -lIce++11
+# -lwtdbosqlite3
+# -lwtdbopostgres
 
 # Runtime lib
 RLIB = 
@@ -46,7 +48,7 @@ $(OBJDIR)/%.o: $(CMMDIR)/%$(EXT)
 	$(CC) $(CXXFLAGS) -o $@ -c $<
 
 ################## Run #################
-r:
+run:
 	./$(APPNAME) $(RLIB)
 
 runTrace:
