@@ -16,10 +16,8 @@ EventDataModule::EventDataPack EventsDataInterfaceI::registerEvent(string userTo
 {
 
 	int userId = authInterface_->authSession_.processUserTokenForId(userToken);
-	if (eventDataPack.clientData.id == 0)
-		eventDataPack.clientData.id = eventsDataSession_.regClientData(userId, eventDataPack.clientData);
 
-	int eventID = eventsDataSession_.regEventData(userId, eventDataPack.clientData.id, eventDataPack.eventData);
+	int eventID = eventsDataSession_.regEventData(userId, eventDataPack.eventData);
 
 	for (int x = 0; x < eventDataPack.seqServices.size(); ++x)
 	{

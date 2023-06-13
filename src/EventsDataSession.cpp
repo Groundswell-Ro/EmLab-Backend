@@ -36,7 +36,7 @@ void EventsDataSession::configureSession()
 	std::cout << "\n\n Configure ---------- EVENT ---------- Session ENDED \n\n";
 }
 
-int EventsDataSession::regEventData(int userId, int clientId, EventDataModule::EventData eventData)
+int EventsDataSession::regEventData(int userId, EventDataModule::EventData eventData)
 {
 	std::cout << "\n\n regEventData  ------------- START \n\n";
 
@@ -44,11 +44,11 @@ int EventsDataSession::regEventData(int userId, int clientId, EventDataModule::E
 	dbo::Transaction transaction(session_);
 
 	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
-	dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(clientId);
+	// dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(clientId);
 	std::unique_ptr<Event> event{new Event()};
 
 	event->user = user;
-	event->client = client;
+	// event->client = client;
 
 	event->dateTime = dateTime.toTimePoint();
 	event->duration = eventData.duration;
@@ -201,15 +201,15 @@ EventDataModule::SeqEventDataPack EventsDataSession::getAllEvents(int userId)
 		auto eventDateTime = Wt::WDateTime(event->dateTime);
 
 		eventDataPack.eventData.id = event->id();
-		eventDataPack.eventData.clientId = event->client.id();
+		// eventDataPack.eventData.clientId = event->client.id();
 		eventDataPack.eventData.dateTime = eventDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
 		eventDataPack.eventData.duration = event->duration;
 		eventDataPack.eventData.location = event->location;
 		eventDataPack.eventData.observations = event->observations;
 
-		eventDataPack.clientData.name = event->client->name;
-		eventDataPack.clientData.phone = event->client->phone;
-		eventDataPack.clientData.specialNote = event->client->specialNote;
+		// eventDataPack.clientData.name = event->client->name;
+		// eventDataPack.clientData.phone = event->client->phone;
+		// eventDataPack.clientData.specialNote = event->client->specialNote;
 
 		Services services = session_.find<Service>().where("event_id = ?").orderBy("date_time DESC").bind(event->id());
 
@@ -357,7 +357,7 @@ void EventsDataSession::modifyEventIntField(int eventId, EventDataModule::EventF
 		std::cout << "\n\n modifyEventIntField: clientId = " << newValue << "\n\n";
 		dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(eventId);
 		dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(newValue);
-		event.modify()->client = client;
+		// event.modify()->client = client;
 	}
 	else
 	{
@@ -447,15 +447,15 @@ EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, st
 		auto eventDateTime = Wt::WDateTime(event->dateTime);
 
 		eventDataPack.eventData.id = event->id();
-		eventDataPack.eventData.clientId = event->client.id();
+		// eventDataPack.eventData.clientId = event->client.id();
 		eventDataPack.eventData.dateTime = eventDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
 		eventDataPack.eventData.duration = event->duration;
 		eventDataPack.eventData.location = event->location;
 		eventDataPack.eventData.observations = event->observations;
 
-		eventDataPack.clientData.name = event->client->name;
-		eventDataPack.clientData.phone = event->client->phone;
-		eventDataPack.clientData.specialNote = event->client->specialNote;
+		// eventDataPack.clientData.name = event->client->name;
+		// eventDataPack.clientData.phone = event->client->phone;
+		// eventDataPack.clientData.specialNote = event->client->specialNote;
 
 		Services services = session_.find<Service>().where("event_id = ?").orderBy("date_time DESC").bind(event->id());
 
@@ -496,10 +496,10 @@ EventDataModule::EventDataPack EventsDataSession::getEventData(int eventId)
 
 	auto eventDateTime = Wt::WDateTime(event->dateTime);
 
-	eventDataPack.eventData.clientId = event->client.id();
-	eventDataPack.clientData.name = event->client->name;
-	eventDataPack.clientData.phone = event->client->phone;
-	eventDataPack.clientData.specialNote = event->client->specialNote;
+	// eventDataPack.eventData.clientId = event->client.id();
+	// eventDataPack.clientData.name = event->client->name;
+	// eventDataPack.clientData.phone = event->client->phone;
+	// eventDataPack.clientData.specialNote = event->client->specialNote;
 
 	eventDataPack.eventData.id = event->id();
 	eventDataPack.eventData.dateTime = eventDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();

@@ -16,7 +16,7 @@ public:
 
     void configureSession();
 
-    int regEventData(int userId, int clientId, EventDataModule::EventData eventData);
+    int regEventData(int userId, EventDataModule::EventData eventData);
     int regClientData(int userId, EventDataModule::ClientData clientData);
 
     void modifyEventIntField(int eventId, EventDataModule::EventField field, int newValue);

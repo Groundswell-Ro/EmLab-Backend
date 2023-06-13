@@ -131,7 +131,7 @@ public:
 	void persist(Action &a)
 	{
 		dbo::belongsTo(a, user, "user");
-		dbo::hasMany(a, events, dbo::ManyToOne, "client");
+		// dbo::hasMany(a, events, dbo::ManyToOne, "client");
 		dbo::field(a, name, "name");
 		dbo::field(a, phone, "phone");
 		dbo::field(a, specialNote, "specialNote");
@@ -168,7 +168,7 @@ class Event : public dbo::Dbo<Event>
 {
 public:
 	dbo::ptr<User> user;
-	dbo::ptr<Client> client;
+	// dbo::ptr<Client> client;
 	dbo::collection<dbo::ptr<Service>> services;
 	std::chrono::system_clock::time_point dateTime;
 	double duration;
@@ -179,7 +179,7 @@ public:
 	void persist(Action &a)
 	{
 		dbo::belongsTo(a, user, "user");
-		dbo::belongsTo(a, client, "client");
+		// dbo::belongsTo(a, client, "client");
 		dbo::hasMany(a, services, dbo::ManyToOne, "event");
 		dbo::field(a, dateTime, "date_time");
 		dbo::field(a, duration, "duration");
