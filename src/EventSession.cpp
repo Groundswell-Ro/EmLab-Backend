@@ -1,4 +1,4 @@
-#include "include/EventsDataSession.h"
+#include "include/EventSession.h"
 #include "include/DboTables.h"
 
 #include <Wt/Dbo/Exception.h>
@@ -12,18 +12,18 @@ using namespace Wt;
 
 namespace dbo = Wt::Dbo;
 
-EventsDataSession::EventsDataSession(std::unique_ptr<dbo::SqlConnection> conn)
+EventSession::EventSession(std::unique_ptr<dbo::SqlConnection> conn)
 {
 	session_.setConnection(std::move(conn));
 
 	configureSession();
 }
 
-EventsDataSession::~EventsDataSession()
+EventSession::~EventSession()
 {
 }
 
-void EventsDataSession::configureSession()
+void EventSession::configureSession()
 {
 	std::cout << "\n\n Configure ---------- EVENT ---------- Session STARTED \n\n";
 
@@ -36,11 +36,11 @@ void EventsDataSession::configureSession()
 	std::cout << "\n\n Configure ---------- EVENT ---------- Session ENDED \n\n";
 }
 
-int EventsDataSession::regEventData(int userId, EventDataModule::EventData eventData)
+int EventSession::regEventInfo(int userId, EventInfo eventInfo)
 {
-	std::cout << "\n\n regEventData  ------------- START \n\n";
+	std::cout << "\n\n regeventInfo  ------------- START \n\n";
 
-	auto dateTime = Wt::WDateTime().fromString(eventData.dateTime, "dd/MM/yyyy HH:mm AP");
+	auto dateTime = Wt::WDateTime().fromString(eventInfo.dateTime, datetime_format_);
 	dbo::Transaction transaction(session_);
 
 	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
@@ -51,20 +51,20 @@ int EventsDataSession::regEventData(int userId, EventDataModule::EventData event
 	// event->client = client;
 
 	event->dateTime = dateTime.toTimePoint();
-	event->duration = eventData.duration;
-	event->location = eventData.location;
-	event->observations = eventData.observations;
+	event->duration = eventInfo.duration;
+	event->location = eventInfo.location;
+	event->description = eventInfo.description;
 
 	dbo::ptr<Event> eventPtrDbo = session_.add(std::move(event));
 
 	transaction.commit();
-	std::cout << "\n\n regEventData  ------------- END \n\n";
+	std::cout << "\n\n regEventInfo  ------------- END \n\n";
 	return eventPtrDbo.id();
 }
 
-int EventsDataSession::regClientData(int userId, EventDataModule::ClientData clientData)
+int EventSession::regClientInfo(int userId, ClientInfo clientInfo)
 {
-	std::cout << "\n\n regClientData  ------------- START \n\n";
+	std::cout << "\n\n regclientInfo  ------------- START \n\n";
 
 	dbo::Transaction transaction(session_);
 
@@ -72,52 +72,52 @@ int EventsDataSession::regClientData(int userId, EventDataModule::ClientData cli
 	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
 
 	// see if client with client name and phone already exists
-	dbo::ptr<Client> clientPtrDbo = session_.find<Client>().where("name = ? AND phone = ?").bind(clientData.name).bind(clientData.phone);
+	dbo::ptr<Client> clientPtrDbo = session_.find<Client>().where("name = ? AND phone = ?").bind(clientInfo.name).bind(clientInfo.phone);
 	if (clientPtrDbo)
 	{
-		std::cout << "\n\n regClientData  ------------- END \n\n";
+		std::cout << "\n\n regclientInfo  ------------- END \n\n";
 		return clientPtrDbo.id();
 	}
 
 	client->user = user;
-	client->name = clientData.name;
-	client->phone = clientData.phone;
-	client->specialNote = clientData.specialNote;
+	client->name = clientInfo.name;
+	client->phone = clientInfo.phone;
+	client->specialNote = clientInfo.specialNote;
 
 	dbo::ptr<Client> clientPtr = session_.add(std::move(client));
 	transaction.commit();
 
-	std::cout << "\n\n regClientData  ------------- END \n\n";
+	std::cout << "\n\n regclientInfo  ------------- END \n\n";
 	return clientPtr.id();
 }
 
-void EventsDataSession::addServiceData(EventDataModule::ServiceData serviceData)
+void EventSession::addServiceData(ServiceInfo ServiceInfo)
 {
-	auto dateTime = Wt::WDateTime().fromString(serviceData.dateTime, "dd/MM/yyyy HH:mm AP");
+	auto dateTime = Wt::WDateTime().fromString(ServiceInfo.dateTime, datetime_format_);
 	dbo::Transaction transaction(session_);
-	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(serviceData.eventId);
+	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(ServiceInfo.eventId);
 	std::unique_ptr<Service> service{new Service()};
 
 	service->event = event;
-	service->providerIdentity = serviceData.providerIdentity;
-	service->providerService = serviceData.providerService;
+	service->providerIdentity = ServiceInfo.providerIdentity;
+	service->providerService = ServiceInfo.providerService;
 	service->dateTime = dateTime.toTimePoint();
-	service->duration = serviceData.duration;
-	service->cost = serviceData.cost;
-	service->description = serviceData.description;
-	service->observations = serviceData.observations;
+	service->duration = ServiceInfo.duration;
+	service->cost = ServiceInfo.cost;
+	service->description = ServiceInfo.description;
+	service->observations = ServiceInfo.observations;
 
 	dbo::ptr<Service> servicePtr = session_.add(std::move(service));
 
 	transaction.commit();
 }
 
-void EventsDataSession::modifyServiceIntField(int serviceId, EventDataModule::ServiceField field, int newValue)
+void EventSession::modifyServiceIntField(int serviceId, ServiceField field, int newValue)
 {
 	dbo::Transaction transaction(session_);
 	dbo::ptr<Service> service = session_.find<Service>().where("id = ?").bind(serviceId);
 
-	if (field == EventDataModule::ServiceField::cost)
+	if (field == ServiceField::cost)
 	{
 		std::cout << "\n modifyServiceIntField: cost \n";
 		service.modify()->cost = newValue;
@@ -130,33 +130,33 @@ void EventsDataSession::modifyServiceIntField(int serviceId, EventDataModule::Se
 	transaction.commit();
 }
 
-void EventsDataSession::modifyServiceStringField(int serviceId, EventDataModule::ServiceField field, std::string newValue)
+void EventSession::modifyServiceStringField(int serviceId, ServiceField field, std::string newValue)
 {
 	dbo::Transaction transaction(session_);
 	dbo::ptr<Service> service = session_.find<Service>().where("id = ?").bind(serviceId);
 
-	if (field == EventDataModule::ServiceField::providerIdentity)
+	if (field == ServiceField::providerIdentity)
 	{
 		std::cout << "\n modifyServiceStringField: providerIdentity \n";
 		service.modify()->providerIdentity = newValue;
 	}
-	else if (field == EventDataModule::ServiceField::providerService)
+	else if (field == ServiceField::providerService)
 	{
 		std::cout << "\n modifyServiceStringField: providerService \n";
 		service.modify()->providerService = newValue;
 	}
-	else if (field == EventDataModule::ServiceField::dateTime)
+	else if (field == ServiceField::dateTime)
 	{
 		std::cout << "\n modifyServiceStringField: dateTime \n";
-		Wt::WDateTime dateTime = Wt::WDateTime().fromString(newValue, "dd/MM/yyyy HH:mm AP");
+		Wt::WDateTime dateTime = Wt::WDateTime().fromString(newValue, datetime_format_);
 		service.modify()->dateTime = dateTime.toTimePoint();
 	}
-	else if (field == EventDataModule::ServiceField::description)
+	else if (field == ServiceField::description)
 	{
 		std::cout << "\n modifyServiceStringField: description \n";
 		service.modify()->description = newValue;
 	}
-	else if (field == EventDataModule::ServiceField::observations)
+	else if (field == ServiceField::observations)
 	{
 		std::cout << "\n modifyServiceStringField: observations \n";
 		service.modify()->observations = newValue;
@@ -169,12 +169,12 @@ void EventsDataSession::modifyServiceStringField(int serviceId, EventDataModule:
 	transaction.commit();
 }
 
-void EventsDataSession::modifyServiceDoubleField(int serviceId, EventDataModule::ServiceField field, double newValue)
+void EventSession::modifyServiceDoubleField(int serviceId, ServiceField field, double newValue)
 {
 	dbo::Transaction transaction(session_);
 	dbo::ptr<Service> service = session_.find<Service>().where("id = ?").bind(serviceId);
 
-	if (field == EventDataModule::ServiceField::duration)
+	if (field == ServiceField::duration)
 	{
 		std::cout << "\n modifyServiceDoubleField: duration \n";
 		service.modify()->duration = newValue;
@@ -188,34 +188,34 @@ void EventsDataSession::modifyServiceDoubleField(int serviceId, EventDataModule:
 	transaction.commit();
 }
 
-EventDataModule::SeqEventDataPack EventsDataSession::getAllEvents(int userId)
+SeqEventData EventSession::getAllEvents(int userId)
 {
-	EventDataModule::SeqEventDataPack seqEventDataPack;
+	SeqEventData seqEventData;
 
 	dbo::Transaction transaction(session_);
 
 	Events eventsCollection = session_.find<Event>().where("user_id = ?").orderBy("date_time DESC").bind(userId);
 	for (const dbo::ptr<Event> &event : eventsCollection)
 	{
-		EventDataModule::EventDataPack eventDataPack;
+		EventData eventData;
 		auto eventDateTime = Wt::WDateTime(event->dateTime);
 
-		eventDataPack.eventData.id = event->id();
-		// eventDataPack.eventData.clientId = event->client.id();
-		eventDataPack.eventData.dateTime = eventDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
-		eventDataPack.eventData.duration = event->duration;
-		eventDataPack.eventData.location = event->location;
-		eventDataPack.eventData.observations = event->observations;
+		eventData.eventInfo.id = event->id();
+		// eventData.eventInfo.clientId = event->client.id();
+		eventData.eventInfo.dateTime = eventDateTime.toString(datetime_format_).toUTF8();
+		eventData.eventInfo.duration = event->duration;
+		eventData.eventInfo.location = event->location;
+		eventData.eventInfo.description = event->description;
 
-		// eventDataPack.clientData.name = event->client->name;
-		// eventDataPack.clientData.phone = event->client->phone;
-		// eventDataPack.clientData.specialNote = event->client->specialNote;
+		// eventData.ClientInfo.name = event->client->name;
+		// eventData.ClientInfo.phone = event->client->phone;
+		// eventData.ClientInfo.specialNote = event->client->specialNote;
 
 		Services services = session_.find<Service>().where("event_id = ?").orderBy("date_time DESC").bind(event->id());
 
 		for (const dbo::ptr<Service> serviceDb : event->services)
 		{
-			EventDataModule::ServiceData service;
+			ServiceInfo service;
 
 			auto serviceDateTime = Wt::WDateTime(serviceDb->dateTime);
 
@@ -223,26 +223,26 @@ EventDataModule::SeqEventDataPack EventsDataSession::getAllEvents(int userId)
 			service.eventId = serviceDb->event.id();
 			service.providerIdentity = serviceDb->providerIdentity;
 			service.providerService = serviceDb->providerService;
-			service.dateTime = serviceDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
+			service.dateTime = serviceDateTime.toString(datetime_format_).toUTF8();
 			service.cost = serviceDb->cost;
 			service.duration = serviceDb->duration;
 			service.description = serviceDb->description;
 			service.observations = serviceDb->observations;
 
-			eventDataPack.seqServices.push_back(service);
+			eventData.seqServiceInfo.push_back(service);
 		}
 
-		seqEventDataPack.push_back(eventDataPack);
+		seqEventData.push_back(eventData);
 	}
 
 	transaction.commit();
 
-	return seqEventDataPack;
+	return seqEventData;
 }
 
-EventDataModule::SeqClients EventsDataSession::getAllClients(int userId)
+SeqClientInfo EventSession::getAllClients(int userId)
 {
-	EventDataModule::SeqClients seqClients;
+	SeqClientInfo seqClientInfo;
 	dbo::Transaction transaction(session_);
 	try
 	{
@@ -250,12 +250,12 @@ EventDataModule::SeqClients EventsDataSession::getAllClients(int userId)
 
 		for (const dbo::ptr<Client> client : clients)
 		{
-			EventDataModule::ClientData clientData;
-			clientData.id = client->id();
-			clientData.name = client->name;
-			clientData.phone = client->phone;
+			ClientInfo ClientInfo;
+			ClientInfo.id = client->id();
+			ClientInfo.name = client->name;
+			ClientInfo.phone = client->phone;
 
-			seqClients.push_back(clientData);
+			seqClientInfo.push_back(ClientInfo);
 		}
 	}
 	catch (dbo::Exception &e)
@@ -264,14 +264,14 @@ EventDataModule::SeqClients EventsDataSession::getAllClients(int userId)
 	}
 
 	transaction.commit();
-	return seqClients;
+	return seqClientInfo;
 }
 
-EventDataModule::SeqClients EventsDataSession::getClientsByName(int userId, std::string name)
+SeqClientInfo EventSession::getClientsByName(int userId, std::string name)
 {
 	std::cout << "\n\n getClientsByName  = " << name << "\n\n";
 
-	EventDataModule::SeqClients seqClients;
+	SeqClientInfo seqClientInfo;
 	dbo::Transaction transaction(session_);
 	try
 	{
@@ -279,12 +279,12 @@ EventDataModule::SeqClients EventsDataSession::getClientsByName(int userId, std:
 
 		for (const dbo::ptr<Client> client : clients)
 		{
-			EventDataModule::ClientData clientData;
-			clientData.id = client->id();
-			clientData.name = client->name;
-			clientData.phone = client->phone;
+			ClientInfo ClientInfo;
+			ClientInfo.id = client->id();
+			ClientInfo.name = client->name;
+			ClientInfo.phone = client->phone;
 
-			seqClients.push_back(clientData);
+			seqClientInfo.push_back(ClientInfo);
 		}
 	}
 	catch (dbo::Exception &e)
@@ -293,14 +293,14 @@ EventDataModule::SeqClients EventsDataSession::getClientsByName(int userId, std:
 	}
 
 	transaction.commit();
-	return seqClients;
+	return seqClientInfo;
 }
 
-EventDataModule::SeqClients EventsDataSession::getClientsByPhone(int userId, std::string phone)
+SeqClientInfo EventSession::getClientsByPhone(int userId, std::string phone)
 {
 	std::cout << "\n\n getClientsByPhone  = " << phone << "\n\n";
 
-	EventDataModule::SeqClients seqClients;
+	SeqClientInfo seqClientInfo;
 	dbo::Transaction transaction(session_);
 	try
 	{
@@ -308,12 +308,12 @@ EventDataModule::SeqClients EventsDataSession::getClientsByPhone(int userId, std
 
 		for (const dbo::ptr<Client> client : clients)
 		{
-			EventDataModule::ClientData clientData;
-			clientData.id = client->id();
-			clientData.name = client->name;
-			clientData.phone = client->phone;
+			ClientInfo ClientInfo;
+			ClientInfo.id = client->id();
+			ClientInfo.name = client->name;
+			ClientInfo.phone = client->phone;
 
-			seqClients.push_back(clientData);
+			seqClientInfo.push_back(ClientInfo);
 		}
 	}
 	catch (dbo::Exception &e)
@@ -322,25 +322,25 @@ EventDataModule::SeqClients EventsDataSession::getClientsByPhone(int userId, std
 	}
 
 	transaction.commit();
-	return seqClients;
+	return seqClientInfo;
 }
 
-void EventsDataSession::deleteRecord(EventDataModule::Table table, int id)
+void EventSession::deleteRecord(Table table, int id)
 {
 	std::cout << "\n\n deleteRecord  = " << id << "\n\n";
 	dbo::Transaction transaction(session_);
 
-	if (table == EventDataModule::Table::clients)
+	if (table == Table::clients)
 	{
 		dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(id);
 		client.remove();
 	}
-	else if (table == EventDataModule::Table::events)
+	else if (table == Table::events)
 	{
 		dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(id);
 		event.remove();
 	}
-	else if (table == EventDataModule::Table::services)
+	else if (table == Table::services)
 	{
 		dbo::ptr<Service> service = session_.find<Service>().where("id = ?").bind(id);
 		service.remove();
@@ -349,10 +349,10 @@ void EventsDataSession::deleteRecord(EventDataModule::Table table, int id)
 	transaction.commit();
 }
 
-void EventsDataSession::modifyEventIntField(int eventId, EventDataModule::EventField field, int newValue)
+void EventSession::modifyEventIntField(int eventId, EventField field, int newValue)
 {
 	dbo::Transaction transaction(session_);
-	if (field == EventDataModule::EventField::clientId)
+	if (field == EventField::clientId)
 	{
 		std::cout << "\n\n modifyEventIntField: clientId = " << newValue << "\n\n";
 		dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(eventId);
@@ -366,10 +366,10 @@ void EventsDataSession::modifyEventIntField(int eventId, EventDataModule::EventF
 	transaction.commit();
 }
 
-void EventsDataSession::modifyEventDoubleField(int eventId, EventDataModule::EventField field, double newValue)
+void EventSession::modifyEventDoubleField(int eventId, EventField field, double newValue)
 {
 	dbo::Transaction transaction(session_);
-	if (field == EventDataModule::EventField::duration)
+	if (field == EventField::duration)
 	{
 
 		std::cout << "\n\n modifyEventDoubleField: duration = " << newValue << "\n\n";
@@ -384,15 +384,14 @@ void EventsDataSession::modifyEventDoubleField(int eventId, EventDataModule::Eve
 	transaction.commit();
 }
 
-void EventsDataSession::modifyEventStringField(int eventId, EventDataModule::EventField field, std::string newValue)
-{
+void EventSession::modifyEventStringField(int eventId, EventField field, std::string newValue){
 	dbo::Transaction transaction(session_);
 	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(eventId);
 
-	if (field == EventDataModule::EventField::dateTime)
+	if (field == EventField::dateTime)
 	{
 		std::cout << "\n\n modifyEventStringField: dateTime = " << newValue << "\n\n";
-		auto dateTime = Wt::WDateTime().fromString(newValue, "dd/MM/yyyy HH:mm AP");
+		auto dateTime = Wt::WDateTime().fromString(newValue, datetime_format_);
 		event.modify()->dateTime = dateTime.toTimePoint();
 		auto services = event->services;
 
@@ -404,15 +403,15 @@ void EventsDataSession::modifyEventStringField(int eventId, EventDataModule::Eve
 			service.modify()->dateTime = serviceDateTime.toTimePoint();
 		}
 	}
-	else if (field == EventDataModule::EventField::location)
+	else if (field == EventField::location)
 	{
 		std::cout << "\n\n modifyEventStringField: location = " << newValue << "\n\n";
 		event.modify()->location = newValue;
 	}
-	else if (field == EventDataModule::EventField::observations)
+	else if (field == EventField::description)
 	{
-		std::cout << "\n\n modifyEventStringField: observations = " << newValue << "\n\n";
-		event.modify()->observations = newValue;
+		std::cout << "\n\n modifyEventStringField: description = " << newValue << "\n\n";
+		event.modify()->description = newValue;
 	}
 	else
 	{
@@ -422,13 +421,13 @@ void EventsDataSession::modifyEventStringField(int eventId, EventDataModule::Eve
 	transaction.commit();
 }
 
-EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, std::string fromDate, int offset)
+SeqEventData EventSession::getTenEvents(int userId, std::string fromDate, int offset)
 {
 	// Events eventsCollection = session_.find<Event>().where("user_id = ?").bind(userId).orderBy("id DESC").limit(10).offset(offset);
-	EventDataModule::SeqEventDataPack seqEventDataPack;
+	SeqEventData seqEventData;
 
 	dbo::Transaction transaction(session_);
-	auto dateTime = Wt::WDateTime().fromString(fromDate, "dd/MM/yyyy");
+	auto dateTime = Wt::WDateTime().fromString(fromDate, date_format_);
 
 	auto eventsQuery = session_.find<Event>();
 	eventsQuery.where("user_id = ?").bind(userId);
@@ -443,25 +442,24 @@ EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, st
 	// Events eventsCollection = session_.find<Event>().where("user_id = ?").orderBy("date_time DESC").bind(userId).limit(10).offset(offset);
 	for (const dbo::ptr<Event> &event : eventsCollection)
 	{
-		EventDataModule::EventDataPack eventDataPack;
 		auto eventDateTime = Wt::WDateTime(event->dateTime);
+		EventData eventData;
+		eventData.eventInfo.id = event->id();
+		// eventData.eventInfo.clientId = event->client.id();
+		eventData.eventInfo.dateTime = eventDateTime.toString(datetime_format_).toUTF8();
+		eventData.eventInfo.duration = event->duration;
+		eventData.eventInfo.location = event->location;
+		eventData.eventInfo.description = event->description;
 
-		eventDataPack.eventData.id = event->id();
-		// eventDataPack.eventData.clientId = event->client.id();
-		eventDataPack.eventData.dateTime = eventDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
-		eventDataPack.eventData.duration = event->duration;
-		eventDataPack.eventData.location = event->location;
-		eventDataPack.eventData.observations = event->observations;
-
-		// eventDataPack.clientData.name = event->client->name;
-		// eventDataPack.clientData.phone = event->client->phone;
-		// eventDataPack.clientData.specialNote = event->client->specialNote;
+		// eventData.elientInfo.name = event->client->name;
+		// eventData.elientInfo.phone = event->client->phone;
+		// eventData.elientInfo.specialNote = event->client->specialNote;
 
 		Services services = session_.find<Service>().where("event_id = ?").orderBy("date_time DESC").bind(event->id());
 
 		for (const dbo::ptr<Service> serviceDb : event->services)
 		{
-			EventDataModule::ServiceData service;
+			ServiceInfo service;
 
 			auto serviceDateTime = Wt::WDateTime(serviceDb->dateTime);
 
@@ -469,47 +467,47 @@ EventDataModule::SeqEventDataPack EventsDataSession::getTenEvents(int userId, st
 			service.eventId = serviceDb->event.id();
 			service.providerIdentity = serviceDb->providerIdentity;
 			service.providerService = serviceDb->providerService;
-			service.dateTime = serviceDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
+			service.dateTime = serviceDateTime.toString(datetime_format_).toUTF8();
 			service.cost = serviceDb->cost;
 			service.duration = serviceDb->duration;
 			service.description = serviceDb->description;
 			service.observations = serviceDb->observations;
 
-			eventDataPack.seqServices.push_back(service);
+			eventData.seqServiceInfo.push_back(service);
 		}
 
-		seqEventDataPack.push_back(eventDataPack);
+		seqEventData.push_back(eventData);
 	}
 
 	transaction.commit();
 
-	return seqEventDataPack;
+	return seqEventData;
 }
 
-EventDataModule::EventDataPack EventsDataSession::getEventData(int eventId)
+EventData EventSession::getEventData(int eventId)
 {
-	std::cout << "\n\n getEventData: eventId = " << eventId << "\n\n";
+	std::cout << "\n\n getEventInfo: eventId = " << eventId << "\n\n";
 	dbo::Transaction transaction(session_);
-	EventDataModule::EventDataPack eventDataPack;
+	EventData eventData;
 
 	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(eventId);
 
 	auto eventDateTime = Wt::WDateTime(event->dateTime);
 
-	// eventDataPack.eventData.clientId = event->client.id();
-	// eventDataPack.clientData.name = event->client->name;
-	// eventDataPack.clientData.phone = event->client->phone;
-	// eventDataPack.clientData.specialNote = event->client->specialNote;
+	// EventInfoPack.EventInfo.clientId = event->client.id();
+	// EventInfoPack.ClientInfo.name = event->client->name;
+	// EventInfoPack.ClientInfo.phone = event->client->phone;
+	// EventInfoPack.ClientInfo.specialNote = event->client->specialNote;
 
-	eventDataPack.eventData.id = event->id();
-	eventDataPack.eventData.dateTime = eventDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
-	eventDataPack.eventData.duration = event->duration;
-	eventDataPack.eventData.location = event->location;
-	eventDataPack.eventData.observations = event->observations;
+	eventData.eventInfo.id = event->id();
+	eventData.eventInfo.dateTime = eventDateTime.toString(datetime_format_).toUTF8();
+	eventData.eventInfo.duration = event->duration;
+	eventData.eventInfo.location = event->location;
+	eventData.eventInfo.description = event->description;
 
 	for (const dbo::ptr<Service> &serviceDb : event->services)
 	{
-		EventDataModule::ServiceData service;
+		ServiceInfo service;
 
 		auto serviceDateTime = Wt::WDateTime(serviceDb->dateTime);
 
@@ -517,15 +515,15 @@ EventDataModule::EventDataPack EventsDataSession::getEventData(int eventId)
 		service.eventId = serviceDb->event.id();
 		service.providerIdentity = serviceDb->providerIdentity;
 		service.providerService = serviceDb->providerService;
-		service.dateTime = serviceDateTime.toString("dd/MM/yyyy HH:mm AP").toUTF8();
+		service.dateTime = serviceDateTime.toString(datetime_format_).toUTF8();
 		service.duration = serviceDb->duration;
 		service.cost = serviceDb->cost;
 		service.description = serviceDb->description;
 		service.observations = serviceDb->observations;
 
-		eventDataPack.seqServices.push_back(service);
+		eventData.seqServiceInfo.push_back(service);
 	}
 
 	transaction.commit();
-	return eventDataPack;
+	return eventData;
 }

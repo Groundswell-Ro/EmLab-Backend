@@ -18,11 +18,6 @@ public:
 
 	virtual string getUserName(string userToken, const Ice::Current &) override;
 
-	virtual void addUserService(string userToken, ServiceInfo userServiceInfo, const Ice::Current &) override;
-	virtual void removeUserService(string userToken, int userServiceId, const Ice::Current &) override;
-	virtual void updateUserService(string userToken, ServiceInfo userServiceInfo, const Ice::Current &) override;
-	virtual ServicesInfoSq getSelfServices(string userToken, const Ice::Current &) override;
-	virtual AuthModule::UserServices getUserServicesByEmail(string email, const Ice::Current &) override;
 
 	AuthSession authSession_;
 

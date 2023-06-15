@@ -27,18 +27,12 @@ public:
     static void configureAuth();
     void configureSession();
 
-    // functions used to manadge user services
-    void addUserService(Wt::WString userToken, ServiceInfo userServiceInfo);
-    void removeUserService(Wt::WString userToken, int userServiceId);
-    void updateUserService(Wt::WString userToken, ServiceInfo userServiceInfo);
 
     // functions used by auth interface
     LoginReturn logUserIn(LoginInfo loginInfo);
     RegistrationResponse registerNewUser(RegistrationInfo registrationInfo);
     int processUserTokenForId(Wt::WString userToken);
     Wt::WString processUserTokenForName(Wt::WString userToken);
-    AuthModule::ServicesInfoSq processUserTokenForServices(Wt::WString userToken);
-    AuthModule::UserServices processUserEmailForServices(Wt::WString email);
 
     ChangePasswordResponse changeUserPassword(Wt::WString userToken, Wt::WString oldPassword, Wt::WString newPassword);
 

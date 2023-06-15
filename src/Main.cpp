@@ -1,5 +1,5 @@
 #include "include/AuthInterfaceI.h"
-#include "include/EventsDataInterfaceI.h"
+#include "include/EventInterfaceI.h"
 
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
 #include <Wt/Dbo/backend/Sqlite3.h>
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 		auto authServant = make_shared<AuthInterfaceI>(std::move(fixedConnPool->getConnection()));
 
 		// Events Data Interface HERE
-		auto eventDataServant = make_shared<EventsDataInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
+		auto eventDataServant = make_shared<EventInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
 
 		// Add Servants to the adaptor
 		adapter->add(authServant, Ice::stringToIdentity("Authentification"));

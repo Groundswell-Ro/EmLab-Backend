@@ -98,6 +98,7 @@ RegistrationResponse AuthSession::registerNewUser(RegistrationInfo registrationI
 	std::unique_ptr<User> newUserPtr{new User()};
 	newUserPtr->name = registrationInfo.name;
 	newUserPtr->phone = registrationInfo.phone;
+	newUserPtr->photo = registrationInfo.photo;
 	dbo::ptr<User> userPtr = session_.add(std::move(newUserPtr));
 
 	// Crteate a new AuthInfo record and returns a Wt::Auth::User
@@ -144,7 +145,6 @@ LoginReturn AuthSession::logUserIn(LoginInfo loginInfo)
 		{
 			loginReturn.token = auth().createAuthToken(user);
 			std::cout << "\n\n ------------------ processUserTokenForServices ------------------ \n\n";
-			loginReturn.servicesInfoSq = processUserTokenForServices(loginReturn.token);
 			std::cout << "\n\n ------------------ processUserTokenForServices ------------------ \n\n";
 			loginReturn.loginResponse = LoginResponse::LoggedIn;
 		}
@@ -156,63 +156,6 @@ LoginReturn AuthSession::logUserIn(LoginInfo loginInfo)
 
 	transaction.commit();
 	return loginReturn;
-}
-
-AuthModule::ServicesInfoSq AuthSession::processUserTokenForServices(Wt::WString userToken)
-{
-	AuthModule::ServicesInfoSq servicesInfoSq;
-
-	dbo::Transaction transaction(session_);
-
-	auto userResultToken = myAuthService.processAuthToken(userToken.toUTF8(), users());
-
-	auto user = users_->find(userResultToken.user());
-	auto userServices = user->user()->userServices;
-
-	for (Wt::Dbo::ptr<UserService> &userService : userServices)
-	{
-		AuthModule::ServiceInfo structUserServiceInfo;
-
-		structUserServiceInfo.id = userService.id();
-		structUserServiceInfo.title = userService->title;
-		structUserServiceInfo.description = userService->description;
-		structUserServiceInfo.price = std::stoi(userService->price);
-
-		servicesInfoSq.push_back(structUserServiceInfo);
-	}
-
-	transaction.commit();
-
-	return servicesInfoSq;
-}
-
-AuthModule::UserServices AuthSession::processUserEmailForServices(Wt::WString email)
-{
-	AuthModule::UserServices userServices;
-
-	dbo::Transaction transaction(session_);
-
-	auto user = users_->findWithEmail(email.toUTF8());
-
-	if (user.isValid())
-	{
-		dbo::ptr<User> userPtr = session_.find<User>().where("id = ?").bind(user.id());
-
-		auto userServicesPtr = userPtr->userServices;
-
-		for (Wt::Dbo::ptr<UserService> &userService : userServicesPtr)
-		{
-			AuthModule::ServiceInfo serviceInfo;
-
-			serviceInfo.id = userService.id();
-			serviceInfo.title = userService->title;
-			serviceInfo.description = userService->description;
-			serviceInfo.price = std::stoi(userService->price);
-
-			userServices.servicesInfoSq.push_back(serviceInfo);
-		}
-	}
-	return userServices;
 }
 
 Wt::WString AuthSession::processUserTokenForName(Wt::WString userToken)
@@ -293,52 +236,4 @@ ChangePasswordResponse AuthSession::changeUserPassword(Wt::WString userToken, Wt
 	transaction.commit();
 
 	return changePasswordResponse;
-}
-
-void AuthSession::addUserService(Wt::WString userToken, AuthModule::ServiceInfo structServiceInfo)
-{
-	dbo::Transaction transaction(session_);
-	auto userId = processUserTokenForId(userToken);
-	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
-
-	dbo::ptr<UserService> userService = session_.add(std::make_unique<UserService>());
-	userService.modify()->title = structServiceInfo.title;
-	userService.modify()->description = structServiceInfo.description;
-	userService.modify()->price = std::to_string(structServiceInfo.price);
-	userService.modify()->user = user;
-
-	transaction.commit();
-}
-
-void AuthSession::removeUserService(Wt::WString userToken, int serviceId)
-{
-	dbo::Transaction transaction(session_);
-	auto userId = processUserTokenForId(userToken);
-	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
-
-	dbo::ptr<UserService> userService = session_.find<UserService>().where("id = ?").bind(serviceId);
-	userService.remove();
-
-	transaction.commit();
-}
-
-void AuthSession::updateUserService(Wt::WString userToken, AuthModule::ServiceInfo structServiceInfo)
-{
-	std::cout << "\n\n ------------------ updateUserService ------------------ \n\n";
-	std::cout << structServiceInfo.id << "\n";
-	std::cout << structServiceInfo.title << "\n";
-	std::cout << structServiceInfo.description << "\n";
-	std::cout << structServiceInfo.price << "\n\n";
-
-	dbo::Transaction transaction(session_);
-	auto userId = processUserTokenForId(userToken);
-	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
-
-	dbo::ptr<UserService> userService = session_.find<UserService>().where("id = ?").bind(structServiceInfo.id);
-
-	userService.modify()->title = structServiceInfo.title;
-	userService.modify()->description = structServiceInfo.description;
-	userService.modify()->price = std::to_string(structServiceInfo.price);
-
-	transaction.commit();
 }
