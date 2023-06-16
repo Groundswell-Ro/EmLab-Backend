@@ -1,13 +1,13 @@
 #include "include/AuthSession.h"
 #include <Wt/WApplication.h>
-#include "Wt/Auth/AuthService.h"
-#include "Wt/Auth/HashFunction.h"
-#include "Wt/Auth/PasswordService.h"
-#include "Wt/Auth/PasswordStrengthValidator.h"
-#include "Wt/Auth/PasswordVerifier.h"
-#include "Wt/Auth/GoogleService.h"
-#include "Wt/Auth/FacebookService.h"
-#include "Wt/Auth/Dbo/AuthInfo.h"
+#include <Wt/Auth/AuthService.h>
+#include <Wt/Auth/HashFunction.h>
+#include <Wt/Auth/PasswordService.h>
+#include <Wt/Auth/PasswordStrengthValidator.h>
+#include <Wt/Auth/PasswordVerifier.h>
+#include <Wt/Auth/GoogleService.h>
+#include <Wt/Auth/FacebookService.h>
+#include <Wt/Auth/Dbo/AuthInfo.h>
 #include <Wt/Auth/Token.h>
 #include <Wt/WRandom.h>
 
@@ -51,12 +51,15 @@ void AuthSession::configureAuth()
 }
 
 void AuthSession::configureSession()
+
 {
+
 	session_.mapClass<Event>("event");
 	session_.mapClass<Client>("client");
 	session_.mapClass<Service>("service");
 	session_.mapClass<UserService>("user_service");
 
+	session_.mapClass<UserRole>("user_role");
 	session_.mapClass<User>("user");
 	session_.mapClass<AuthInfo>("auth_info");
 	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
@@ -69,7 +72,20 @@ void AuthSession::configureSession()
 	try
 	{
 		session_.createTables();
+		// add user roles to the user_roles table
 		log("info") << "Database created | mesage from Event session";
+		std::unique_ptr<UserRole> adminRole{new UserRole()};
+		std::unique_ptr<UserRole> clientRole{new UserRole()};
+		std::unique_ptr<UserRole> organizerRole{new UserRole()};
+		
+		adminRole->role = AuthModule::ADMIN;
+		clientRole->role = AuthModule::CLIENT;
+		organizerRole->role = AuthModule::PROVIDER;
+
+		dbo::ptr<UserRole> adminRolePtr = session_.add(std::move(adminRole));
+		dbo::ptr<UserRole> clientRolePtr = session_.add(std::move(clientRole));
+		dbo::ptr<UserRole> organizerRolePtr = session_.add(std::move(organizerRole));
+
 	}
 	catch (dbo::Exception &e)
 	{
@@ -99,6 +115,18 @@ RegistrationResponse AuthSession::registerNewUser(RegistrationInfo registrationI
 	newUserPtr->name = registrationInfo.name;
 	newUserPtr->phone = registrationInfo.phone;
 	newUserPtr->photo = registrationInfo.photo;
+
+	if(registrationInfo.role == AuthModule::CLIENT){
+		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(AuthModule::CLIENT);
+		newUserPtr->role = rolePtr;
+	}else if (registrationInfo.role == AuthModule::PROVIDER){
+		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(AuthModule::PROVIDER);
+		newUserPtr->role = rolePtr;
+	}else if (registrationInfo.role == AuthModule::ADMIN){
+		std::cout << "\n\n you cannot create a user with Admin Role privilages \n\n";
+	}else {
+		std::cout << "\n\n i dont know, something is broken in registerNewUser \n\n";
+	}
 	dbo::ptr<User> userPtr = session_.add(std::move(newUserPtr));
 
 	// Crteate a new AuthInfo record and returns a Wt::Auth::User
@@ -128,8 +156,11 @@ LoginReturn AuthSession::logUserIn(LoginInfo loginInfo)
 
 	if (user.isValid())
 	{
+		auto userData = session_.find<User>().where("id = ?").bind(user.id()).resultValue();
 		loginReturn.loginResponse = LoginResponse::Identified;
-		loginReturn.name = session_.find<User>().where("id = ?").bind(user.id()).resultValue()->name;
+		
+		loginReturn.name = userData->name;
+		loginReturn.role = userData->role->role;
 
 		auto passwordResult = myPasswordService.verifyPassword(user, loginInfo.password);
 
@@ -144,8 +175,6 @@ LoginReturn AuthSession::logUserIn(LoginInfo loginInfo)
 		else if (passwordResult == Wt::Auth::PasswordResult::PasswordValid)
 		{
 			loginReturn.token = auth().createAuthToken(user);
-			std::cout << "\n\n ------------------ processUserTokenForServices ------------------ \n\n";
-			std::cout << "\n\n ------------------ processUserTokenForServices ------------------ \n\n";
 			loginReturn.loginResponse = LoginResponse::LoggedIn;
 		}
 	}
