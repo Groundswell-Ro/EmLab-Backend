@@ -1,5 +1,6 @@
 #pragma once
 #include "../../../comunication/AuthModule.h"
+#include "../../../comunication/Utils.h"
 
 #include <Wt/Auth/Dbo/UserDatabase.h>
 
@@ -10,6 +11,10 @@
 #include <Wt/Dbo/Session.h>
 #include <Wt/Dbo/ptr.h>
 #include "DboTables.h"
+
+#include <iostream>
+#include <fstream>
+
 
 namespace dbo = Wt::Dbo;
 using namespace AuthModule;

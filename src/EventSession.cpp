@@ -40,7 +40,7 @@ int EventSession::regEventInfo(int userId, EventInfo eventInfo)
 {
 	std::cout << "\n\n regeventInfo  ------------- START \n\n";
 
-	auto dateTime = Wt::WDateTime().fromString(eventInfo.dateTime, datetime_format_);
+	auto dateTime = Wt::WDateTime().fromString(eventInfo.dateTime, Emlab::datetime_format_);
 	dbo::Transaction transaction(session_);
 
 	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
@@ -93,7 +93,7 @@ int EventSession::regClientInfo(int userId, ClientInfo clientInfo)
 
 void EventSession::addServiceData(ServiceInfo ServiceInfo)
 {
-	auto dateTime = Wt::WDateTime().fromString(ServiceInfo.dateTime, datetime_format_);
+	auto dateTime = Wt::WDateTime().fromString(ServiceInfo.dateTime, Emlab::datetime_format_);
 	dbo::Transaction transaction(session_);
 	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(ServiceInfo.eventId);
 	std::unique_ptr<Service> service{new Service()};
@@ -148,7 +148,7 @@ void EventSession::modifyServiceStringField(int serviceId, ServiceField field, s
 	else if (field == ServiceField::dateTime)
 	{
 		std::cout << "\n modifyServiceStringField: dateTime \n";
-		Wt::WDateTime dateTime = Wt::WDateTime().fromString(newValue, datetime_format_);
+		Wt::WDateTime dateTime = Wt::WDateTime().fromString(newValue, Emlab::datetime_format_);
 		service.modify()->dateTime = dateTime.toTimePoint();
 	}
 	else if (field == ServiceField::description)
@@ -202,7 +202,7 @@ SeqEventData EventSession::getAllEvents(int userId)
 
 		eventData.eventInfo.id = event->id();
 		// eventData.eventInfo.clientId = event->client.id();
-		eventData.eventInfo.dateTime = eventDateTime.toString(datetime_format_).toUTF8();
+		eventData.eventInfo.dateTime = eventDateTime.toString(Emlab::datetime_format_).toUTF8();
 		eventData.eventInfo.duration = event->duration;
 		eventData.eventInfo.location = event->location;
 		eventData.eventInfo.description = event->description;
@@ -223,7 +223,7 @@ SeqEventData EventSession::getAllEvents(int userId)
 			service.eventId = serviceDb->event.id();
 			service.providerIdentity = serviceDb->providerIdentity;
 			service.providerService = serviceDb->providerService;
-			service.dateTime = serviceDateTime.toString(datetime_format_).toUTF8();
+			service.dateTime = serviceDateTime.toString(Emlab::datetime_format_).toUTF8();
 			service.cost = serviceDb->cost;
 			service.duration = serviceDb->duration;
 			service.description = serviceDb->description;
@@ -391,7 +391,7 @@ void EventSession::modifyEventStringField(int eventId, EventField field, std::st
 	if (field == EventField::dateTime)
 	{
 		std::cout << "\n\n modifyEventStringField: dateTime = " << newValue << "\n\n";
-		auto dateTime = Wt::WDateTime().fromString(newValue, datetime_format_);
+		auto dateTime = Wt::WDateTime().fromString(newValue, Emlab::datetime_format_);
 		event.modify()->dateTime = dateTime.toTimePoint();
 		auto services = event->services;
 
@@ -427,7 +427,7 @@ SeqEventData EventSession::getTenEvents(int userId, std::string fromDate, int of
 	SeqEventData seqEventData;
 
 	dbo::Transaction transaction(session_);
-	auto dateTime = Wt::WDateTime().fromString(fromDate, date_format_);
+	auto dateTime = Wt::WDateTime().fromString(fromDate, Emlab::date_format_);
 
 	auto eventsQuery = session_.find<Event>();
 	eventsQuery.where("user_id = ?").bind(userId);
@@ -446,7 +446,7 @@ SeqEventData EventSession::getTenEvents(int userId, std::string fromDate, int of
 		EventData eventData;
 		eventData.eventInfo.id = event->id();
 		// eventData.eventInfo.clientId = event->client.id();
-		eventData.eventInfo.dateTime = eventDateTime.toString(datetime_format_).toUTF8();
+		eventData.eventInfo.dateTime = eventDateTime.toString(Emlab::datetime_format_).toUTF8();
 		eventData.eventInfo.duration = event->duration;
 		eventData.eventInfo.location = event->location;
 		eventData.eventInfo.description = event->description;
@@ -467,7 +467,7 @@ SeqEventData EventSession::getTenEvents(int userId, std::string fromDate, int of
 			service.eventId = serviceDb->event.id();
 			service.providerIdentity = serviceDb->providerIdentity;
 			service.providerService = serviceDb->providerService;
-			service.dateTime = serviceDateTime.toString(datetime_format_).toUTF8();
+			service.dateTime = serviceDateTime.toString(Emlab::datetime_format_).toUTF8();
 			service.cost = serviceDb->cost;
 			service.duration = serviceDb->duration;
 			service.description = serviceDb->description;
@@ -500,7 +500,7 @@ EventData EventSession::getEventData(int eventId)
 	// EventInfoPack.ClientInfo.specialNote = event->client->specialNote;
 
 	eventData.eventInfo.id = event->id();
-	eventData.eventInfo.dateTime = eventDateTime.toString(datetime_format_).toUTF8();
+	eventData.eventInfo.dateTime = eventDateTime.toString(Emlab::datetime_format_).toUTF8();
 	eventData.eventInfo.duration = event->duration;
 	eventData.eventInfo.location = event->location;
 	eventData.eventInfo.description = event->description;
@@ -515,7 +515,7 @@ EventData EventSession::getEventData(int eventId)
 		service.eventId = serviceDb->event.id();
 		service.providerIdentity = serviceDb->providerIdentity;
 		service.providerService = serviceDb->providerService;
-		service.dateTime = serviceDateTime.toString(datetime_format_).toUTF8();
+		service.dateTime = serviceDateTime.toString(Emlab::datetime_format_).toUTF8();
 		service.duration = serviceDb->duration;
 		service.cost = serviceDb->cost;
 		service.description = serviceDb->description;

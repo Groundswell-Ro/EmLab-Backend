@@ -1,4 +1,6 @@
 #pragma once
+#include "../../../comunication/AuthModule.h"
+
 #include "Wt/Auth/Dbo/AuthInfo.h"
 #include <Wt/Dbo/Types.h>
 #include <Wt/WGlobal.h>
@@ -11,6 +13,7 @@ class Client;
 class UserService;
 class Service;
 class User;
+class UserRole;
 
 namespace dbo = Wt::Dbo;
 
@@ -21,12 +24,6 @@ typedef dbo::collection<dbo::ptr<Client>> Clients;
 typedef dbo::collection<dbo::ptr<UserService>> UserServices;
 
 using AuthInfo = Wt::Auth::Dbo::AuthInfo<User>;
-
-enum class Role
-{
-	Admin = 0,
-	User = 1
-};
 
 enum class Subscription
 {
@@ -39,6 +36,12 @@ namespace Wt
 {
 	namespace Dbo
 	{
+		template <>
+		struct dbo_traits<UserRole> : public dbo_default_traits
+		{
+			static const char *versionField() { return 0; }
+		};
+
 		template <>
 		struct dbo_traits<User> : public dbo_default_traits
 		{
@@ -72,6 +75,20 @@ namespace Wt
 	}
 }
 
+class UserRole : public Wt::Dbo::Dbo<UserRole>
+{
+	public:
+	std::string role;
+	dbo::collection< dbo::ptr<User> > users;
+
+	template <class Action>
+	void persist(Action &a)
+	{
+		dbo::field(a, role, "role");
+		dbo::hasMany(a, users, dbo::ManyToOne, "role");
+	}
+};
+
 class User : public Wt::Dbo::Dbo<User>
 {
 public:
@@ -80,7 +97,7 @@ public:
 	std::string name;
 	std::string phone;
 	std::vector<unsigned char> photo;
-	Role role;
+	dbo::ptr<UserRole> role;
 	Subscription subscription;
 	bool darkMode;
 
@@ -92,7 +109,7 @@ public:
 		dbo::field(a, name, "name");
 		dbo::field(a, phone, "phone");
 		dbo::field(a, photo, "photo");
-		dbo::field(a, role, "role");
+		dbo::belongsTo(a, role, "role");
 		dbo::field(a, subscription, "subscription");
 		dbo::field(a, darkMode, "dark_mode");
 	}
