@@ -1,6 +1,4 @@
 #pragma once
-#include "../../../comunication/AuthModule.h"
-
 #include "Wt/Auth/Dbo/AuthInfo.h"
 #include <Wt/Dbo/Types.h>
 #include <Wt/WGlobal.h>
