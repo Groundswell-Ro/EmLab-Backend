@@ -1,5 +1,5 @@
 #pragma once
-#include "../../../comunication/generated/AuthInterface.h"
+#include <comm/AuthInterface.h>
 #include "DboTables.h"
 
 #include <Ice/Ice.h>
