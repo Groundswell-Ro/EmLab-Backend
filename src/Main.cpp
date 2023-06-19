@@ -1,5 +1,8 @@
 #include "include/AuthInterfaceI.h"
 #include "include/EventInterfaceI.h"
+#include "include/ClientInterfaceI.h"
+#include "include/ServiceInterfaceI.h"
+#include "include/ReviewInterfaceI.h"
 
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
 #include <Wt/Dbo/backend/Sqlite3.h>
@@ -11,7 +14,6 @@ int main(int argc, char *argv[])
 {
 
 	// ifstream dbocommFile("/etc/evntmgr/dbo-connection.txt");
-	ifstream commFile("comunication.txt");
 
 	// if (!dbocommFile)
 	// {
@@ -20,50 +22,42 @@ int main(int argc, char *argv[])
 	// }
 	// std::string dboConnString((istreambuf_iterator<char>(dbocommFile)), istreambuf_iterator<char>());
 
-	if (!commFile)
-	{
-		std::cout << "\n\n - ERROR - Give me the connection file ICE and i will work :) - \n\n";
-		return 0;
-	}
-	std::string comAdapter;
-	std::string comConnection;
-
-	getline(commFile, comAdapter);
-	getline(commFile, comConnection);
-
-	// std::cout << "\n\n"
-	// 		  << dboConnString << "\n\n";
-	// std::cout << comAdapter << " ------ " << comConnection << "\n\n";
+	std::string comAdapter = "EventManagerAdapter";
+	std::string comConnection = "default -p 10000";
 
 	/*
 	Create Connection pool to a dbo and gives every interface a connection
 	*/ 
 	// dboConnString to connect to postgress / at the moment im using sqlite for dev
-	auto myPQconnectdb = std::make_unique<dbo::backend::Sqlite3>("text.db");
+	auto myPQconnectdb = std::make_unique<dbo::backend::Sqlite3>("testSqlite.db");
 	myPQconnectdb->setProperty("show-queries", "true");
-	auto fixedConnPool = std::make_shared<dbo::FixedSqlConnectionPool>(std::move(myPQconnectdb), 2);
+	auto fixedConnPool = std::make_shared<dbo::FixedSqlConnectionPool>(std::move(myPQconnectdb), 5);
 
 	try
 	{
 		Ice::CommunicatorHolder ich(argc, argv);
 		auto adapter = ich->createObjectAdapterWithEndpoints(comAdapter, comConnection);
 
-		// Authentification Interface HERE
-		auto authServant = make_shared<AuthInterfaceI>(std::move(fixedConnPool->getConnection()));
-
-		// Events Data Interface HERE
-		auto eventDataServant = make_shared<EventInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
-
+		// Interfaces HERE
+		auto authServant = std::make_shared<AuthInterfaceI>(std::move(fixedConnPool->getConnection()));
+		auto eventServant = std::make_shared<EventInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
+		auto clientServant = std::make_shared<ClientInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
+		auto serviceServant = std::make_shared<ServiceInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
+		auto reviewServant = std::make_shared<ReviewInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
+		
 		// Add Servants to the adaptor
-		adapter->add(authServant, Ice::stringToIdentity("Authentification"));
-		adapter->add(eventDataServant, Ice::stringToIdentity("EventData"));
+		adapter->add(authServant, Ice::stringToIdentity(AUTHADAPTER));
+		adapter->add(eventServant, Ice::stringToIdentity(EVENTADAPTER));
+		adapter->add(clientServant, Ice::stringToIdentity(CLIENTADAPTER));
+		adapter->add(serviceServant, Ice::stringToIdentity(SERVICEADAPTER));
+		adapter->add(reviewServant, Ice::stringToIdentity(REVIEWADAPTER));
 
 		adapter->activate();
 		ich->waitForShutdown();
 	}
 	catch (const std::exception &e)
 	{
-		cerr << e.what() << endl;
+		Wt::log(e.what()) << "\n - ERROR - \n";
 		return 1;
 	}
 	return 0;

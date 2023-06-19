@@ -1,10 +1,7 @@
 #include "include/AuthInterfaceI.h"
 
-namespace
-{
-	Wt::Auth::AuthService myAuthService;
-	Wt::Auth::PasswordService myPasswordService(myAuthService);
-}
+Wt::Auth::AuthService myAuthService;
+Wt::Auth::PasswordService myPasswordService(myAuthService);
 
 AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 {
@@ -26,13 +23,15 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	session_.mapClass<Event>("event");
 	session_.mapClass<Client>("client");
 	session_.mapClass<Service>("service");
-	session_.mapClass<UserService>("user_service");
+	session_.mapClass<ProviderService>("provider_service");
+	session_.mapClass<Review>("review");
 
 	session_.mapClass<UserRole>("user_role");
 	session_.mapClass<User>("user");
 	session_.mapClass<AuthInfo>("auth_info");
 	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
 	session_.mapClass<AuthInfo::AuthTokenType>("auth_token");
+
 
 	users_ = std::make_unique<UserDatabase>(session_);
 	users_->setMaxAuthTokensPerUser(5);
@@ -47,9 +46,9 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 		std::unique_ptr<UserRole> clientRole{new UserRole()};
 		std::unique_ptr<UserRole> organizerRole{new UserRole()};
 		
-		adminRole->role = Emlab::ADMIN;
-		clientRole->role = Emlab::CLIENT;
-		organizerRole->role = Emlab::PROVIDER;
+		adminRole->role = Emlab::ADMINROLE;
+		clientRole->role = Emlab::CLIENTROLE;
+		organizerRole->role = Emlab::PROVIDERROLE;
 
 		dbo::ptr<UserRole> adminRolePtr = session_.add(std::move(adminRole));
 		dbo::ptr<UserRole> clientRolePtr = session_.add(std::move(clientRole));
@@ -131,13 +130,13 @@ RegistrationResponse AuthInterfaceI::registerUser(RegistrationInfo registrationI
 	newUserPtr->phone = registrationInfo.phone;
 	newUserPtr->photo = registrationInfo.photo;
 
-	if(registrationInfo.role == Emlab::CLIENT){
-		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(Emlab::CLIENT);
+	if(registrationInfo.role == Emlab::CLIENTROLE){
+		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(Emlab::CLIENTROLE);
 		newUserPtr->role = rolePtr;
-	}else if (registrationInfo.role == Emlab::PROVIDER){
-		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(Emlab::PROVIDER);
+	}else if (registrationInfo.role == Emlab::PROVIDERROLE){
+		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(Emlab::PROVIDERROLE);
 		newUserPtr->role = rolePtr;
-	}else if (registrationInfo.role == Emlab::ADMIN){
+	}else if (registrationInfo.role == Emlab::ADMINROLE){
 		std::cout << "\n\n you cannot create a user with Admin Role privilages \n\n";
 	}else {
 		std::cout << "\n\n i dont know, something is broken in registerNewUser \n\n";

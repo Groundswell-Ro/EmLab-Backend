@@ -1,2 +1,4 @@
-*.d
 src/obj/*.o
+*.d
+backend
+testSqlite.db

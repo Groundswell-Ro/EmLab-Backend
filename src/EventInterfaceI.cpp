@@ -4,15 +4,98 @@ EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::
 	: authInterface_(authInterface)
 {
 	session_.setConnection(std::move(conn));
-	session_.mapClass<UserService>("user_service");
+	session_.mapClass<ProviderService>("provider_service");
 	session_.mapClass<Client>("client");
 	session_.mapClass<Service>("service");
 	session_.mapClass<Event>("event");
 	session_.mapClass<User>("user");
 	session_.mapClass<UserRole>("user_role");
+	session_.mapClass<Review>("review");
+
 }
 
-SeqEventData EventInterfaceI::getEventsData(string userToken, const Ice::Current &)
+int EventInterfaceI::addEventInfo(std::string userToken, EventInfo eventInfo, const Ice::Current &)
+{
+	int userId = authInterface_->processUserTokenForId(userToken);
+	auto dateTime = Wt::WDateTime().fromString(eventInfo.dateTime, Emlab::DATETIMEFORMAT);
+	dbo::Transaction transaction(session_);
+
+	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
+	// dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(clientId);
+	std::unique_ptr<Event> event{new Event()};
+
+	event->user = user;
+	// event->client = client;
+	event->dateTime = dateTime.toTimePoint();
+	event->duration = eventInfo.duration;
+	event->location = eventInfo.location;
+	event->description = eventInfo.description;
+	dbo::ptr<Event> eventPtrDbo = session_.add(std::move(event));
+	eventInfo.id = eventPtrDbo->id();
+	transaction.commit();
+	// for (int x = 0; x < eventData.seqServiceInfo.size(); ++x)
+	// {
+	// 	auto serviceData = eventData.seqServiceInfo.at(x);
+	// 	serviceData.eventId = eventID;
+	// 	eventSession_.addServiceData(serviceData);
+	// }
+	return eventInfo.id;
+}
+
+int EventInterfaceI::addEventData(std::string userToken, EventData eventData, const Ice::Current &)
+{
+	int id = 0;
+	std::cout << "\n\n addEventData \n\n";
+	return id;
+}
+
+
+void EventInterfaceI::delEvent(std::string userToken, int eventId, const Ice::Current &)
+{
+	int userId = authInterface_->processUserTokenForId(userToken);
+	dbo::Transaction transaction(session_);
+	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(eventId);
+	event.remove();
+	transaction.commit();
+}
+
+void EventInterfaceI::setEventDateTime(std::string userToken, int eventId, std::string newDateTime, const Ice::Current &)
+{
+	std::cout << "\n\n setEventDateTime \n\n";
+}
+
+void EventInterfaceI::setEventDate(std::string userToken, int eventId, std::string newDate, const Ice::Current &)
+{
+	std::cout << "\n\n setEventDate \n\n";
+}
+
+void EventInterfaceI::setEventTime(std::string userToken, int eventId, std::string newTime, const Ice::Current &)
+{
+	std::cout << "\n\n setEventTime \n\n";
+}
+
+void EventInterfaceI::setClient(std::string userToken, int eventId, int clientId, const Ice::Current &)
+{
+	std::cout << "\n\n setClient \n\n";
+}
+
+void EventInterfaceI::setDuration(std::string userToken, int eventId, int duration, const Ice::Current &)
+{
+	std::cout << "\n\n setDuration \n\n";
+}
+
+void EventInterfaceI::setLocation(std::string userToken, int eventId, std::string location, const Ice::Current &)
+{
+	std::cout << "\n\n setLocation \n\n";
+}
+
+void EventInterfaceI::setDescription(std::string userToken, int eventId, std::string description, const Ice::Current &)
+{
+	std::cout << "\n\n setDescription \n\n";
+}
+
+
+SeqEventData EventInterfaceI::getSeqEventData(std::string userToken, const Ice::Current &)
 {
 	int userId = authInterface_->processUserTokenForId(userToken);
 	SeqEventData seqEventData;
@@ -58,43 +141,21 @@ SeqEventData EventInterfaceI::getEventsData(string userToken, const Ice::Current
 	return seqEventData;
 }
 
-EventData EventInterfaceI::addEvent(string userToken, EventData eventData, const Ice::Current &)
+
+
+EventData EventInterfaceI::getEventData(std::string userToken, int eventId, const Ice::Current &)
 {
-
-	int userId = authInterface_->processUserTokenForId(userToken);
-	auto eventInfo = eventData.eventInfo;
-	auto dateTime = Wt::WDateTime().fromString(eventInfo.dateTime, Emlab::DATETIMEFORMAT);
-	dbo::Transaction transaction(session_);
-
-	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
-	// dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(clientId);
-	std::unique_ptr<Event> event{new Event()};
-
-	event->user = user;
-	// event->client = client;
-	event->dateTime = dateTime.toTimePoint();
-	event->duration = eventInfo.duration;
-	event->location = eventInfo.location;
-	event->description = eventInfo.description;
-	dbo::ptr<Event> eventPtrDbo = session_.add(std::move(event));
-	eventData.eventInfo.id = eventPtrDbo->id();
-	transaction.commit();
-	// for (int x = 0; x < eventData.seqServiceInfo.size(); ++x)
-	// {
-	// 	auto serviceData = eventData.seqServiceInfo.at(x);
-	// 	serviceData.eventId = eventID;
-	// 	eventSession_.addServiceData(serviceData);
-	// }
+	EventData eventData;
+	eventData.eventInfo.description = "test";
+	std::cout << "\n\n getEventData \n\n";
 	return eventData;
 }
 
-void EventInterfaceI::delEvent(string userToken, int eventId, const Ice::Current &)
+EventInfo EventInterfaceI::getEventInfo(std::string userToken, int eventId, const Ice::Current &)
 {
-	int userId = authInterface_->processUserTokenForId(userToken);
-	dbo::Transaction transaction(session_);
-	dbo::ptr<Event> event = session_.find<Event>().where("id = ?").bind(eventId);
-	event.remove();
-	transaction.commit();
+	EventInfo eventInfo;
+	std::cout << "\n\n getEventInfo \n\n";
+	return eventInfo;
 }
 
 

@@ -21,8 +21,6 @@
 #include <Wt/Dbo/Exception.h>
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
 
-#include <Wt/WString.h>
-// using namespace std;
 using namespace Emlab;
 
 using UserDatabase = Wt::Auth::Dbo::UserDatabase<AuthInfo>;
@@ -46,7 +44,9 @@ public:
     static const Wt::Auth::AbstractPasswordService &passwordAuth();
 
 private:
-    mutable Wt::Dbo::Session session_;
+    Wt::Dbo::Session session_;
     std::unique_ptr<UserDatabase> users_;
+
+
 
 };
