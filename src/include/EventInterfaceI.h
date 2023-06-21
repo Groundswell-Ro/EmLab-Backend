@@ -1,7 +1,7 @@
 #pragma once
 #include "AuthInterfaceI.h"
 #include "DboTables.h"
-#include <comm/EventInterface.h>
+#include "../../../comunication/comm/EventInterface.h"
 
 
 #include <Wt/Dbo/Session.h>

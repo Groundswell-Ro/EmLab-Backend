@@ -1,5 +1,5 @@
 #pragma once
-#include <comm/AuthInterface.h>
+#include "../../../comunication/comm/AuthInterface.h"
 #include "DboTables.h"
 
 #include <Ice/Ice.h>
@@ -46,7 +46,5 @@ public:
 private:
     Wt::Dbo::Session session_;
     std::unique_ptr<UserDatabase> users_;
-
-
 
 };

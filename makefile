@@ -1,12 +1,12 @@
 # Compiler settings
 CC = g++
-CXXFLAGS = -std=c++14 -I. -I../comunication -I../comunication/comm  -DICE_CPP11_MAPPING
+CXXFLAGS = -std=c++14 -I. -I../comunication -I../comunication/comm -I../comunication/utils -DICE_CPP11_MAPPING
 
 # Makefile settings
 APPNAME = backend
 EXT = .cpp
 SRCDIR = ./src
-CMMDIR = ../comunication/obj
+CMMDIR = ../comunication/comm
 OBJDIR = ./src/obj
 
 # Linking lib
@@ -19,7 +19,8 @@ RLIB =
 
 ############## Creating variables #############
 SRC = $(wildcard $(SRCDIR)/*$(EXT))
-OBJCOMM = $(wildcard $(CMMDIR)/*.o)
+COMM = $(wildcard $(CMMDIR)/*$(EXT))
+OBJCOMM = $(wildcard $(CMMDIR)/*.o) $(COMM:$(CMMDIR)/%$(EXT)=$(OBJDIR)/%.o)
 OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
 
 ########################################################################
@@ -37,6 +38,9 @@ $(APPNAME): $(OBJ) $(OBJCOMM)
 
 # Building rule for .o files and its .c/.cpp in combination with all .h
 $(OBJDIR)/%.o: $(SRCDIR)/%$(EXT) | gen_obj_dir
+	$(CC) $(CXXFLAGS) -o $@ -c $<
+
+$(OBJDIR)/%.o: $(CMMDIR)/%$(EXT)
 	$(CC) $(CXXFLAGS) -o $@ -c $<
 
 ################## Run #################
