@@ -89,6 +89,7 @@ public:
 	std::string name;
 	std::string phone;
 	std::vector<unsigned char> photo;
+	std::chrono::system_clock::time_point joinDate;
 	dbo::ptr<UserRole> role;
 	bool darkMode;
 
@@ -101,6 +102,7 @@ public:
 		dbo::field(a, name, "name");
 		dbo::field(a, phone, "phone");
 		dbo::field(a, photo, "photo");
+		dbo::field(a, joinDate, "join_date");
 		dbo::belongsTo(a, role, "role");
 		dbo::field(a, darkMode, "dark_mode");
 	}
@@ -132,6 +134,7 @@ public:
 	std::string name;
 	std::string phone;
 	std::string specialNote;
+	std::vector<unsigned char> photo;
 
 	template <class Action>
 	void persist(Action &a)
@@ -141,6 +144,7 @@ public:
 		dbo::field(a, name, "name");
 		dbo::field(a, phone, "phone");
 		dbo::field(a, specialNote, "specialNote");
+		dbo::field(a, photo, "photo");
 	}
 };
 
