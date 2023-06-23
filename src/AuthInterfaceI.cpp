@@ -11,6 +11,7 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	myAuthService.setAuthTokensEnabled(true);
 	myAuthService.setAuthTokenUpdateEnabled(false);
 	myAuthService.setAuthTokenValidity(300);
+	myAuthService.setEmailVerificationEnabled(true);
 
 	std::unique_ptr<Wt::Auth::PasswordVerifier> verifier = std::make_unique<Wt::Auth::PasswordVerifier>();
 	verifier->addHashFunction(std::make_unique<Wt::Auth::BCryptHashFunction>(7));
@@ -20,18 +21,23 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	myPasswordService.setAttemptThrottlingEnabled(true);
 
 	// Configure Session
-	session_.mapClass<Event>("event");
-	session_.mapClass<Client>("client");
-	session_.mapClass<Service>("service");
-	session_.mapClass<ProviderService>("provider_service");
-	session_.mapClass<Review>("review");
-
-	session_.mapClass<UserRole>("user_role");
 	session_.mapClass<User>("user");
+	session_.mapClass<UserRole>("user_role");
 	session_.mapClass<AuthInfo>("auth_info");
 	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
 	session_.mapClass<AuthInfo::AuthTokenType>("auth_token");
 
+
+	session_.mapClass<Profile>("profile");
+	session_.mapClass<ProfileService>("profile_service");
+	session_.mapClass<ProfileGalery>("profile_galery");
+	session_.mapClass<ServiceAgeGroup>("service_age_group");
+
+	session_.mapClass<Event>("event");
+	session_.mapClass<EventService>("event_service");
+
+	session_.mapClass<Review>("review");
+	session_.mapClass<ReviewGalery>("review_galery");
 
 	users_ = std::make_unique<UserDatabase>(session_);
 	users_->setMaxAuthTokensPerUser(5);
@@ -197,11 +203,6 @@ ChangePasswordResponse AuthInterfaceI::changePassword(std::string userToken, std
 	{
 		std::cout << "\n\n ------------------ PASSWORD INVALID ------------------ \n\n";
 		changePasswordResponse = ChangePasswordResponse::OldPasswordIncorrect;
-	}
-	else if (passwordResult == Wt::Auth::PasswordResult::LoginThrottling)
-	{
-		std::cout << "\n\n ------------------ THROTTLING ACTIVATED ------------------ \n\n";
-		changePasswordResponse = ChangePasswordResponse::ThrottlingActivated;
 	}
 	else if (passwordResult == Wt::Auth::PasswordResult::PasswordValid)
 	{

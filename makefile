@@ -1,6 +1,6 @@
 # Compiler settings
 CC = g++
-CXXFLAGS = -std=c++14 -I. -I../comunication -I../comunication/comm -I../comunication/utils -DICE_CPP11_MAPPING
+CXXFLAGS = -std=c++14 -I. -I../comunication -I../comunication/comm -DICE_CPP11_MAPPING
 
 # Makefile settings
 APPNAME = backend

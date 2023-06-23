@@ -4,14 +4,19 @@ ServiceInterfaceI::ServiceInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, s
 	: authInterface_(authInterface)
 {
 	session_.setConnection(std::move(conn));
-	session_.mapClass<ProviderService>("provider_service");
-	session_.mapClass<Client>("client");
-	session_.mapClass<Service>("service");
-	session_.mapClass<Event>("event");
 	session_.mapClass<User>("user");
-	session_.mapClass<UserRole>("user_role");
-	session_.mapClass<Review>("review");
 
+	session_.mapClass<Profile>("profile");
+	session_.mapClass<ProfileService>("profile_service");
+	session_.mapClass<ProfileGalery>("profile_galery");
+	session_.mapClass<ServiceAgeGroup>("service_age_group");
+
+	session_.mapClass<Event>("event");
+	session_.mapClass<EventService>("event_service");
+	
+
+	session_.mapClass<Review>("review");
+	session_.mapClass<ReviewGalery>("review_galery");
 }
 
 
