@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 	Create Connection pool to a dbo and gives every interface a connection
 	*/ 
 	// dboConnString to connect to postgress / at the moment im using sqlite for dev
-	auto myPQconnectdb = std::make_unique<dbo::backend::Sqlite3>("testSqlite.db");
+	auto myPQconnectdb = std::make_unique<dbo::backend::Sqlite3>("/mnt/c/Users/croit/Desktop/testSqlite.db");
 	myPQconnectdb->setProperty("show-queries", "true");
 	auto fixedConnPool = std::make_shared<dbo::FixedSqlConnectionPool>(std::move(myPQconnectdb), 5);
 

@@ -17,7 +17,7 @@ EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::
 	session_.mapClass<User>("user");
 	session_.mapClass<UserRole>("user_role");
 
-	session_.mapClass<Profile>("profile");
+	session_.mapClass<ProviderProfile>("provider_profile");
 	session_.mapClass<ProfileService>("profile_service");
 	session_.mapClass<ProfileGalery>("profile_galery");
 	session_.mapClass<ServiceAgeGroup>("service_age_group");
@@ -40,7 +40,7 @@ int EventInterfaceI::addEventInfo(std::string userToken, EventInfo eventInfo, co
 	// dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(clientId);
 	std::unique_ptr<Event> event{new Event()};
 
-	event->user = user;
+	// event->user = user;
 	// event->client = client;
 	event->dateTime = dateTime.toTimePoint();
 	event->duration = eventInfo.duration;
@@ -64,7 +64,6 @@ int EventInterfaceI::addEventData(std::string userToken, EventData eventData, co
 	std::cout << "\n\n addEventData \n\n";
 	return id;
 }
-
 
 void EventInterfaceI::delEvent(std::string userToken, int eventId, const Ice::Current &)
 {
@@ -130,25 +129,25 @@ SeqEventData EventInterfaceI::getSeqEventData(std::string userToken, const Ice::
 		eventData.eventInfo.location = event->location;
 		eventData.eventInfo.description = event->description;
 
-		auto services = session_.find<EventServices>().where("event_id = ?").orderBy("date_time DESC").bind(event->id());
+		// auto services = session_.find<EventServices>().where("event_id = ?").orderBy("date_time DESC").bind(event->id()).resultList();
 
-		for (const dbo::ptr<EventService> serviceDb : event->eventServices)
-		{
-			ServiceInfo service;
-			auto serviceDateTime = Wt::WDateTime(serviceDb->dateTime);
+		// for (const dbo::ptr<EventService> serviceDb : event->eventServices)
+		// {
+		// 	ServiceInfo service;
+		// 	auto serviceDateTime = Wt::WDateTime(serviceDb->dateTime);
 
-			service.id = serviceDb->id();
-			service.eventId = serviceDb->event.id();
-			service.providerIdentity = serviceDb->providerIdentity;
-			service.providerService = serviceDb->providerService;
-			service.dateTime = serviceDateTime.toString(Emlab::DATETIMEFORMAT).toUTF8();
-			service.cost = serviceDb->cost;
-			service.duration = serviceDb->duration;
-			service.description = serviceDb->description;
-			service.observations = serviceDb->observations;
+		// 	service.id = serviceDb->id();
+		// 	service.eventId = serviceDb->event.id();
+		// 	service.providerIdentity = serviceDb->providerIdentity;
+		// 	service.providerService = serviceDb->providerService;
+		// 	service.dateTime = serviceDateTime.toString(Emlab::DATETIMEFORMAT).toUTF8();
+		// 	service.cost = serviceDb->cost;
+		// 	service.duration = serviceDb->duration;
+		// 	service.description = serviceDb->description;
+		// 	service.observations = serviceDb->observations;
 
-			eventData.seqServiceInfo.push_back(service);
-		}
+		// 	eventData.seqServiceInfo.push_back(service);
+		// }
 
 		seqEventData.push_back(eventData);
 	}

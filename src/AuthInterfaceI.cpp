@@ -45,18 +45,6 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
 	session_.mapClass<AuthInfo::AuthTokenType>("auth_token");
 
-
-	session_.mapClass<Profile>("profile");
-	session_.mapClass<ProfileService>("profile_service");
-	session_.mapClass<ProfileGalery>("profile_galery");
-	session_.mapClass<ServiceAgeGroup>("service_age_group");
-
-	session_.mapClass<Event>("event");
-	session_.mapClass<EventService>("event_service");
-
-	session_.mapClass<Review>("review");
-	session_.mapClass<ReviewGalery>("review_galery");
-
 	users_ = std::make_unique<UserDatabase>(session_);
 	users_->setMaxAuthTokensPerUser(5);
 

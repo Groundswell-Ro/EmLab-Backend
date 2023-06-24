@@ -17,7 +17,7 @@ ClientInterfaceI::ClientInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std
 	session_.mapClass<User>("user");
 	session_.mapClass<UserRole>("user_role");
 
-	session_.mapClass<Profile>("profile");
+	session_.mapClass<ProviderProfile>("provider_profile");
 	session_.mapClass<ProfileService>("profile_service");
 	session_.mapClass<ProfileGalery>("profile_galery");
 	session_.mapClass<ServiceAgeGroup>("service_age_group");

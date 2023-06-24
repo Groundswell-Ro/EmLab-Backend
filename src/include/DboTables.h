@@ -9,11 +9,17 @@
 
 class User;
 class UserRole;
+class ProviderClient;
 
-class Profile;
+class ProviderProfile;
 class ProfileService;
 class ProfileGalery;
+
 class ServiceAgeGroup;
+class ServiceTypeGroup;
+
+class AgeGroup;
+class ServiceType;
 
 class Event;
 class EventService;
@@ -26,11 +32,17 @@ namespace dbo = Wt::Dbo;
 
 typedef dbo::collection<dbo::ptr<User>> Users;
 typedef dbo::collection<dbo::ptr<UserRole>> UserRoles;
+typedef dbo::collection<dbo::ptr<ProviderClient>> ProviderClients;
 
-typedef dbo::collection<dbo::ptr<Profile>> Profiles;
+typedef dbo::collection<dbo::ptr<ProviderProfile>> ProviderProfiles;
 typedef dbo::collection<dbo::ptr<ProfileService>> ProfileServices;
 typedef dbo::collection<dbo::ptr<ProfileGalery>> ProfileGalerys;
+
 typedef dbo::collection<dbo::ptr<ServiceAgeGroup>> ServiceAgeGroups;
+typedef dbo::collection<dbo::ptr<ServiceTypeGroup>> ServiceTypeGroups;
+
+typedef dbo::collection<dbo::ptr<AgeGroup>> AgeGroups;
+typedef dbo::collection<dbo::ptr<ServiceType>> ServiceTypes;
 
 typedef dbo::collection<dbo::ptr<Event>> Events;
 typedef dbo::collection<dbo::ptr<EventService>> EventServices;
@@ -44,34 +56,88 @@ using AuthInfo = Wt::Auth::Dbo::AuthInfo<User>;
 namespace Wt::Dbo
 {
 	template <>
+	struct dbo_traits<User> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
 	struct dbo_traits<UserRole> : public dbo_default_traits
 	{
 		static const char *versionField() { return 0; }
 	};
 
 	template <>
-	struct dbo_traits<User> : public dbo_default_traits
+	struct dbo_traits<ProviderClient> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<ProviderProfile> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<ProfileService> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<ProfileGalery> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<ServiceAgeGroup> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<ServiceTypeGroup> : public dbo_default_traits
 	{
 		static const char *versionField() { return 0; }
 	};
 
 	// template <>
-	// struct dbo_traits<ProviderService> : public dbo_default_traits
+	// struct dbo_traits<AgeGroup> : public dbo_default_traits
 	// {
 	// 	static const char *versionField() { return 0; }
 	// };
 
 	// template <>
-	// struct dbo_traits<Event> : public dbo_default_traits
+	// struct dbo_traits<ServiceType> : public dbo_default_traits
 	// {
 	// 	static const char *versionField() { return 0; }
 	// };
 
-	// template <>
-	// struct dbo_traits<Service> : public dbo_default_traits
-	// {
-	// 	static const char *versionField() { return 0; }
-	// };
+	template <>
+	struct dbo_traits<Event> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<EventService> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<Review> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
+
+	template <>
+	struct dbo_traits<ReviewGalery> : public dbo_default_traits
+	{
+		static const char *versionField() { return 0; }
+	};
 
 }
 
@@ -80,8 +146,9 @@ class User : public Wt::Dbo::Dbo<User>
 {
 public:
 	dbo::ptr<UserRole> role;
-	dbo::weak_ptr<Profile> profile;
-	Events eventsAsClient;
+	dbo::weak_ptr<ProviderProfile> providerProfile;
+	ProviderClients asProvider;
+	ProviderClients asClient;
 	Events events;
 	Reviews reviews;
 	std::string name;
@@ -94,8 +161,9 @@ public:
 	void persist(Action &a)
 	{
 		dbo::belongsTo(a, role, "user_role");
-		dbo::hasOne(a, profile);
-		dbo::hasMany(a, eventsAsClient, dbo::ManyToOne, "user_client");
+		dbo::hasOne(a, providerProfile);
+		dbo::hasMany(a, asProvider, dbo::ManyToOne, "provider");
+		dbo::hasMany(a, asClient, dbo::ManyToOne, "client");
 		dbo::hasMany(a, events, dbo::ManyToOne, "user");
 		dbo::hasMany(a, reviews, dbo::ManyToOne, "user");
 		dbo::field(a, name, "name");
@@ -120,8 +188,25 @@ class UserRole : public Wt::Dbo::Dbo<UserRole>
 	}
 };
 
+class ProviderClient : public Wt::Dbo::Dbo<ProviderClient>
+{
+	public:
+	dbo::ptr<User> provider;
+	dbo::ptr<User> user;
+	dbo::weak_ptr<Event> eventProvider;
+	dbo::weak_ptr<Event> eventClient; 
 
-class Profile : public dbo::Dbo<Profile>
+	template <class Action>
+	void persist(Action &a)
+	{
+		dbo::belongsTo(a, user, "client");
+		dbo::belongsTo(a, provider, "provider");
+		dbo::hasOne(a, eventProvider);
+		dbo::hasOne(a, eventClient);
+	}
+};
+
+class ProviderProfile : public dbo::Dbo<ProviderProfile>
 {
 	public:
 	dbo::ptr<User> user;
@@ -179,8 +264,8 @@ class ServiceAgeGroup : public dbo::Dbo<ServiceAgeGroup>
 class Event : public dbo::Dbo<Event>
 {
 public:
-	dbo::ptr<User> user;
-	dbo::ptr<User> client;
+	dbo::ptr<ProviderClient> provider;
+	dbo::ptr<ProviderClient> client;
 	EventServices eventServices;
 	std::chrono::system_clock::time_point dateTime;
 	double duration;
@@ -190,7 +275,7 @@ public:
 	template <class Action>
 	void persist(Action &a)
 	{
-		dbo::belongsTo(a, user, "user");
+		dbo::belongsTo(a, provider, "user");
 		dbo::belongsTo(a, client, "user_client");
 		dbo::hasMany(a, eventServices, dbo::ManyToOne, "event");
 		dbo::field(a, dateTime, "date_time");
