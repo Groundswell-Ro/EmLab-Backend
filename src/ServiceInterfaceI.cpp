@@ -1,5 +1,14 @@
 #include "include/ServiceInterfaceI.h"
 
+#include <Wt/Dbo/ptr.h>
+#include <Wt/Dbo/SqlConnection.h>
+#include <Wt/Dbo/Exception.h>
+
+#include <Wt/WDateTime.h>
+
+#include <Ice/Ice.h>
+#include <Wt/Dbo/FixedSqlConnectionPool.h>
+
 ServiceInterfaceI::ServiceInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::shared_ptr<AuthInterfaceI> authInterface)
 	: authInterface_(authInterface)
 {
@@ -20,7 +29,7 @@ ServiceInterfaceI::ServiceInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, s
 }
 
 
-int ServiceInterfaceI::addServiceToEvent(std::string userToken, ServiceInfo serviceInfo, const Ice::Current &)
+int ServiceInterfaceI::addServiceToEvent(std::string userToken, Emlab::ServiceInfo serviceInfo, const Ice::Current &)
 {
 	int id = 0;
 	std::cout << "\n\n addServiceToEvent \n\n";

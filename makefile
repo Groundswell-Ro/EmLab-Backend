@@ -1,6 +1,6 @@
 # Compiler settings
 CC = g++
-CXXFLAGS = -std=c++14 -I. -I../comunication -I../comunication/comm -DICE_CPP11_MAPPING
+CXXFLAGS = -std=c++14 -I. -I../comunication/comm -DICE_CPP11_MAPPING
 
 # Makefile settings
 APPNAME = backend
@@ -20,8 +20,8 @@ RLIB =
 ############## Creating variables #############
 SRC = $(wildcard $(SRCDIR)/*$(EXT))
 COMM = $(wildcard $(CMMDIR)/*$(EXT))
-OBJCOMM = $(wildcard $(CMMDIR)/*.o) $(COMM:$(CMMDIR)/%$(EXT)=$(OBJDIR)/%.o)
-OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
+OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o) $(COMM:$(CMMDIR)/%$(EXT)=$(OBJDIR)/%.o)
+DEP = $(OBJ:$(OBJDIR)/%.o=$(OBJDIR)/%.d)
 
 ########################################################################
 ####################### Targets beginning here #########################
@@ -32,6 +32,10 @@ all: $(APPNAME)
 # Builds the app
 $(APPNAME): $(OBJ) $(OBJCOMM)
 	$(CC) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Creates the dependecy rules
+$(OBJDIR)/%.d: $(SRCDIR)/%$(EXT)
+	@$(CXX) $(CXXFLAGS) $< -MM -MT $(@:.d=.o) >$@
 
 # Includes all .h files
 -include $(DEP)

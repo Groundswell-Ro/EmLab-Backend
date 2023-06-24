@@ -1,25 +1,15 @@
 #pragma once
 #include "AuthInterfaceI.h"
-#include "DboTables.h"
 #include "../../../comunication/comm/ServiceInterface.h"
-
-
 #include <Wt/Dbo/Session.h>
-#include <Wt/Dbo/ptr.h>
-#include <Wt/Dbo/SqlConnection.h>
-#include <Wt/Dbo/Exception.h>
 
-#include <Wt/WDateTime.h>
 
-#include <Ice/Ice.h>
-#include <Wt/Dbo/FixedSqlConnectionPool.h>
-
-class ServiceInterfaceI : public ServiceInterface
+class ServiceInterfaceI : public Emlab::ServiceInterface
 {
 public:
 	ServiceInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::shared_ptr<AuthInterfaceI> authInterface);
 
-		virtual int addServiceToEvent(std::string userToken, ServiceInfo serviceInfo, const Ice::Current &) override;
+		virtual int addServiceToEvent(std::string userToken, Emlab::ServiceInfo serviceInfo, const Ice::Current &) override;
         virtual void delService(std::string userToken, std::string serviceId, const Ice::Current &) override;
 
         // virtual void setService(, const Ice::Current &) override;

@@ -1,5 +1,14 @@
 #include "include/ReviewInterfaceI.h"
 
+#include <Wt/Dbo/ptr.h>
+#include <Wt/Dbo/SqlConnection.h>
+#include <Wt/Dbo/Exception.h>
+
+#include <Wt/WDateTime.h>
+
+#include <Ice/Ice.h>
+#include <Wt/Dbo/FixedSqlConnectionPool.h>
+
 ReviewInterfaceI::ReviewInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::shared_ptr<AuthInterfaceI> authInterface)
 	: authInterface_(authInterface)
 {
@@ -21,7 +30,7 @@ ReviewInterfaceI::ReviewInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std
 
 }
 
-int ReviewInterfaceI::addReview(std::string userToken, ReviewInfo reviewInfo, const Ice::Current &)
+int ReviewInterfaceI::addReview(std::string userToken, Emlab::ReviewInfo reviewInfo, const Ice::Current &)
 {
 	int id = 0;
 	std::cout << "\n\n addReview \n\n";
@@ -50,7 +59,7 @@ void ReviewInterfaceI::setReviewRating(std::string userToken, int reviewId, int 
 }
 
 	
-void ReviewInterfaceI::addReviewPhoto(std::string userToken, int reviewId, ImageData imageData, const Ice::Current &)
+void ReviewInterfaceI::addReviewPhoto(std::string userToken, int reviewId, Emlab::ImageData imageData, const Ice::Current &)
 {
 	std::cout << "\n\n  \n\n";
 }
@@ -61,9 +70,9 @@ void ReviewInterfaceI::delReviewPhoto(std::string userToken, int reviewId, int p
 }
 
 
-SeqReviewInfo ReviewInterfaceI::getSeqReviewInfo(std::string providerEmail, const Ice::Current &)
+Emlab::SeqReviewInfo ReviewInterfaceI::getSeqReviewInfo(std::string providerEmail, const Ice::Current &)
 {
-	SeqReviewInfo seqReviewInfo;
+	Emlab::SeqReviewInfo seqReviewInfo;
 	std::cout << "\n\n getSeqReviewInfo \n\n";
 	return seqReviewInfo;
 }

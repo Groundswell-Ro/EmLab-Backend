@@ -9,6 +9,8 @@
 
 #include <iostream>
 #include <fstream>
+#include <Ice/Ice.h>
+
 
 int main(int argc, char *argv[])
 {

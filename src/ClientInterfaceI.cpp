@@ -1,5 +1,15 @@
 #include "include/ClientInterfaceI.h"
 
+#include <Wt/Dbo/Session.h>
+#include <Wt/Dbo/ptr.h>
+#include <Wt/Dbo/SqlConnection.h>
+#include <Wt/Dbo/Exception.h>
+
+#include <Wt/WDateTime.h>
+
+#include <Ice/Ice.h>
+#include <Wt/Dbo/FixedSqlConnectionPool.h>
+
 ClientInterfaceI::ClientInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::shared_ptr<AuthInterfaceI> authInterface)
 	: authInterface_(authInterface)
 {
@@ -22,7 +32,7 @@ ClientInterfaceI::ClientInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std
 }
 
 
-int ClientInterfaceI::addClient(std::string userToken, ClientInfo clientInfo, const Ice::Current &)
+int ClientInterfaceI::addClient(std::string userToken, Emlab::ClientInfo clientInfo, const Ice::Current &)
 {
 	int id = 0;
 	std::cout << "\n\n addClient \n\n";
@@ -51,16 +61,16 @@ void ClientInterfaceI::modifyClientSpecialNotes(std::string userToken, int clien
 }
 
 
-SeqClientInfo ClientInterfaceI::getClientsByName(std::string userToken, std::string partialName, const Ice::Current &)
+Emlab::SeqClientInfo ClientInterfaceI::getClientsByName(std::string userToken, std::string partialName, const Ice::Current &)
 {
-	SeqClientInfo seqClientInfo;
+	Emlab::SeqClientInfo seqClientInfo;
 	std::cout << "\n\n getClientsByName \n\n";
 	return seqClientInfo;
 }
 
-SeqClientInfo ClientInterfaceI::getClientsByPhone(std::string userToken, std::string partialPhone, const Ice::Current &)
+Emlab::SeqClientInfo ClientInterfaceI::getClientsByPhone(std::string userToken, std::string partialPhone, const Ice::Current &)
 {
-	SeqClientInfo seqClientInfo;
+	Emlab::SeqClientInfo seqClientInfo;
 	std::cout << "\n\n getClientsByPhone \n\n";
 	return seqClientInfo;
 }

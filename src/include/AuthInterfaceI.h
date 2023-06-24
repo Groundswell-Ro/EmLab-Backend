@@ -1,39 +1,23 @@
 #pragma once
 #include "../../../comunication/comm/AuthInterface.h"
 #include "DboTables.h"
-
-#include <Ice/Ice.h>
-#include <Wt/Auth/Dbo/UserDatabase.h>
-#include <Wt/Dbo/SqlConnection.h>
-#include <Wt/Dbo/Session.h>
-#include <Wt/Dbo/ptr.h>
 #include <Wt/Auth/AuthService.h>
-#include <Wt/Auth/HashFunction.h>
+#include <Wt/Auth/Dbo/UserDatabase.h>
 #include <Wt/Auth/PasswordService.h>
-#include <Wt/Auth/PasswordStrengthValidator.h>
-#include <Wt/Auth/PasswordVerifier.h>
-#include <Wt/Auth/Dbo/AuthInfo.h>
-#include <Wt/Auth/Token.h>
-
-#include <Wt/Auth/GoogleService.h>
-#include <Wt/Auth/FacebookService.h>
-
-#include <Wt/Dbo/Exception.h>
-#include <Wt/Dbo/FixedSqlConnectionPool.h>
-
-using namespace Emlab;
 
 using UserDatabase = Wt::Auth::Dbo::UserDatabase<AuthInfo>;
 
-class AuthInterfaceI : public AuthInterface
+class AuthInterfaceI : public Emlab::AuthInterface
 {
 public:
 	AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn);
 
-	virtual LoginReturn loginUser(LoginInfo loginInfo, const Ice::Current &) override;
-	virtual RegistrationResponse registerUser(RegistrationInfo registrationInfo, const Ice::Current &) override;
-	virtual ChangePasswordResponse changePassword(std::string userToken, std::string oldPassword, std::string newPassword, const Ice::Current &) override;
-
+	virtual Emlab::LoginReturn loginUser(Emlab::LoginInfo loginInfo, const Ice::Current &) override;
+	virtual Emlab::RegistrationResponse registerUser(Emlab::RegistrationInfo registrationInfo, const Ice::Current &) override;
+	virtual Emlab::ChangePasswordResponse changePassword(std::string userToken, std::string oldPassword, std::string newPassword, const Ice::Current &) override;
+	virtual Emlab::ImageData getUserPhotoWithEmail(std::string userEmail, const Ice::Current &) override;
+	virtual Emlab::ImageData getUserPhotoWithToken(std::string userToken, const Ice::Current &) override;
+    virtual void setUserPhoto(std::string userToken, Emlab::ImageData photo, const Ice::Current &) override;
 
     int processUserTokenForId(std::string userToken);
     std::string processUserTokenForName(std::string userToken);

@@ -1,18 +1,8 @@
 #pragma once
 #include "AuthInterfaceI.h"
-#include "DboTables.h"
 #include "../../../comunication/comm/EventInterface.h"
 
 
-#include <Wt/Dbo/Session.h>
-#include <Wt/Dbo/ptr.h>
-#include <Wt/Dbo/SqlConnection.h>
-#include <Wt/Dbo/Exception.h>
-
-#include <Wt/WDateTime.h>
-
-#include <Ice/Ice.h>
-#include <Wt/Dbo/FixedSqlConnectionPool.h>
 
 using namespace Emlab;
 

@@ -1,5 +1,6 @@
 #pragma once
-#include "Wt/Auth/Dbo/AuthInfo.h"
+#include "../../../comunication/comm/DataTypes.h"
+#include <Wt/Auth/Dbo/AuthInfo.h>
 #include <Wt/Dbo/Types.h>
 #include <Wt/WGlobal.h>
 #include <Wt/WString.h>

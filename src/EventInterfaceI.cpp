@@ -1,5 +1,15 @@
 #include "include/EventInterfaceI.h"
 
+#include <Wt/Dbo/Session.h>
+#include <Wt/Dbo/ptr.h>
+#include <Wt/Dbo/SqlConnection.h>
+#include <Wt/Dbo/Exception.h>
+
+#include <Wt/WDateTime.h>
+
+#include <Ice/Ice.h>
+#include <Wt/Dbo/FixedSqlConnectionPool.h>
+
 EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::shared_ptr<AuthInterfaceI> authInterface)
 	: authInterface_(authInterface)
 {
@@ -15,7 +25,6 @@ EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::
 	session_.mapClass<Event>("event");
 	session_.mapClass<EventService>("event_service");
 	
-
 	session_.mapClass<Review>("review");
 	session_.mapClass<ReviewGalery>("review_galery");
 
