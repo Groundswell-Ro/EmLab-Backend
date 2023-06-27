@@ -18,15 +18,34 @@ EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::
 	session_.mapClass<UserRole>("user_role");
 
 	session_.mapClass<ProviderProfile>("provider_profile");
-	session_.mapClass<ProfileService>("profile_service");
-	session_.mapClass<ProfileGalery>("profile_galery");
+	session_.mapClass<ProviderService>("provider_service");
+	session_.mapClass<ServiceGalery>("service_galery");
+
 	session_.mapClass<ServiceAgeGroup>("service_age_group");
+	session_.mapClass<ServiceType>("service_type");
 
 	session_.mapClass<Event>("event");
 	session_.mapClass<EventService>("event_service");
 	
+
 	session_.mapClass<Review>("review");
 	session_.mapClass<ReviewGalery>("review_galery");
+
+	dbo::Transaction transaction(session_);
+	try
+	{
+		session_.createTables();
+
+	}
+	catch (dbo::Exception &e)
+	{
+		Wt::log("info") << e.what();
+	}
+	catch (...)
+	{
+		Wt::log("info") << "other exception throw ------- mesage from AUTH session";
+	}
+	transaction.commit();
 
 }
 
@@ -37,10 +56,9 @@ int EventInterfaceI::addEventInfo(std::string userToken, EventInfo eventInfo, co
 	dbo::Transaction transaction(session_);
 
 	dbo::ptr<User> user = session_.find<User>().where("id = ?").bind(userId);
-	// dbo::ptr<Client> client = session_.find<Client>().where("id = ?").bind(clientId);
 	std::unique_ptr<Event> event{new Event()};
 
-	// event->user = user;
+	event->user = user;
 	// event->client = client;
 	event->dateTime = dateTime.toTimePoint();
 	event->duration = eventInfo.duration;

@@ -6,19 +6,17 @@
 #include <Wt/WString.h>
 #include <Wt/Dbo/Dbo.h>
 #include <chrono>
+	
+
 
 class User;
 class UserRole;
-class ProviderClient;
 
 class ProviderProfile;
-class ProfileService;
-class ProfileGalery;
+class ProviderService;
+class ServiceGalery;
 
 class ServiceAgeGroup;
-class ServiceTypeGroup;
-
-class AgeGroup;
 class ServiceType;
 
 class Event;
@@ -32,125 +30,34 @@ namespace dbo = Wt::Dbo;
 
 typedef dbo::collection<dbo::ptr<User>> Users;
 typedef dbo::collection<dbo::ptr<UserRole>> UserRoles;
-typedef dbo::collection<dbo::ptr<ProviderClient>> ProviderClients;
 
 typedef dbo::collection<dbo::ptr<ProviderProfile>> ProviderProfiles;
-typedef dbo::collection<dbo::ptr<ProfileService>> ProfileServices;
-typedef dbo::collection<dbo::ptr<ProfileGalery>> ProfileGalerys;
+typedef dbo::collection<dbo::ptr<ProviderService>> ProviderServices;
 
+typedef dbo::collection<dbo::ptr<ServiceGalery>> ServiceGalerys;
 typedef dbo::collection<dbo::ptr<ServiceAgeGroup>> ServiceAgeGroups;
-typedef dbo::collection<dbo::ptr<ServiceTypeGroup>> ServiceTypeGroups;
-
-typedef dbo::collection<dbo::ptr<AgeGroup>> AgeGroups;
 typedef dbo::collection<dbo::ptr<ServiceType>> ServiceTypes;
 
 typedef dbo::collection<dbo::ptr<Event>> Events;
 typedef dbo::collection<dbo::ptr<EventService>> EventServices;
 
 typedef dbo::collection<dbo::ptr<Review>> Reviews;
-typedef dbo::collection<dbo::ptr<ReviewGalery>> ReviewGaleries;
+typedef dbo::collection<dbo::ptr<ReviewGalery>> ReviewGalerys;
 
 
 
 using AuthInfo = Wt::Auth::Dbo::AuthInfo<User>;
 namespace Wt::Dbo
 {
-	template <>
-	struct dbo_traits<User> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<UserRole> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ProviderClient> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ProviderProfile> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ProfileService> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ProfileGalery> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ServiceAgeGroup> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ServiceTypeGroup> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	// template <>
-	// struct dbo_traits<AgeGroup> : public dbo_default_traits
-	// {
-	// 	static const char *versionField() { return 0; }
-	// };
-
-	// template <>
-	// struct dbo_traits<ServiceType> : public dbo_default_traits
-	// {
-	// 	static const char *versionField() { return 0; }
-	// };
-
-	template <>
-	struct dbo_traits<Event> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<EventService> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<Review> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
-
-	template <>
-	struct dbo_traits<ReviewGalery> : public dbo_default_traits
-	{
-		static const char *versionField() { return 0; }
-	};
 
 }
-
 
 class User : public Wt::Dbo::Dbo<User>
 {
 public:
 	dbo::ptr<UserRole> role;
 	dbo::weak_ptr<ProviderProfile> providerProfile;
-	ProviderClients asProvider;
-	ProviderClients asClient;
 	Events events;
-	Reviews reviews;
 	std::string name;
 	std::string phone;
 	std::vector<unsigned char> photo;
@@ -162,10 +69,7 @@ public:
 	{
 		dbo::belongsTo(a, role, "user_role");
 		dbo::hasOne(a, providerProfile);
-		dbo::hasMany(a, asProvider, dbo::ManyToOne, "provider");
-		dbo::hasMany(a, asClient, dbo::ManyToOne, "client");
 		dbo::hasMany(a, events, dbo::ManyToOne, "user");
-		dbo::hasMany(a, reviews, dbo::ManyToOne, "user");
 		dbo::field(a, name, "name");
 		dbo::field(a, phone, "phone");
 		dbo::field(a, photo, "photo");
@@ -188,42 +92,29 @@ class UserRole : public Wt::Dbo::Dbo<UserRole>
 	}
 };
 
-class ProviderClient : public Wt::Dbo::Dbo<ProviderClient>
-{
-	public:
-	dbo::ptr<User> provider;
-	dbo::ptr<User> user;
-	dbo::weak_ptr<Event> eventProvider;
-	dbo::weak_ptr<Event> eventClient; 
-
-	template <class Action>
-	void persist(Action &a)
-	{
-		dbo::belongsTo(a, user, "client");
-		dbo::belongsTo(a, provider, "provider");
-		dbo::hasOne(a, eventProvider);
-		dbo::hasOne(a, eventClient);
-	}
-};
-
 class ProviderProfile : public dbo::Dbo<ProviderProfile>
 {
 	public:
 	dbo::ptr<User> user;
 	std::string username;
+	ProviderServices providerServices;
 
 	template<class Action>
 	void persist(Action& a)
 	{
 		dbo::belongsTo(a, user, "user");
 		dbo::field(a, username, "username");
+		dbo::hasMany(a, providerServices, dbo::ManyToOne, "provider_profile");
 	}
 };
 
-class ProfileService : public dbo::Dbo<ProfileService>
+class ProviderService : public dbo::Dbo<ProviderService>
 {
 public:
-	dbo::ptr<User> user;
+	dbo::ptr<ProviderProfile> providerProfile;
+	ServiceGalerys serviceGalerys;
+	dbo::weak_ptr<ServiceAgeGroup> serviceAgeGroup;
+	dbo::weak_ptr<ServiceType> serviceType;
 	std::string title;
 	std::string description;
 	std::string price;
@@ -231,41 +122,105 @@ public:
 	template <class Action>
 	void persist(Action &a)
 	{
-		dbo::belongsTo(a, user, "user");
+		dbo::belongsTo(a, providerProfile, "provider_profile");
+		dbo::hasMany(a, serviceGalerys, dbo::ManyToOne, "provider_service");
+		dbo::hasOne(a, serviceType);
+		dbo::hasOne(a, serviceAgeGroup);
 		dbo::field(a, title, "title");
 		dbo::field(a, description, "description");
 		dbo::field(a, price, "price");
 	}
 };
 
-class ProfileGalery : public dbo::Dbo<ProfileGalery>
+class ServiceGalery : public dbo::Dbo<ServiceGalery>
 {
 	public:
+	dbo::ptr<ProviderService> providerService;
+	std::vector<unsigned char> photo;
 
 	template <class Action>
 	void persist(Action &a)
 	{
-		
+		dbo::belongsTo(a, providerService, "provider_service");
+		dbo::field(a, photo, "photo");
 	}
 };
 
 class ServiceAgeGroup : public dbo::Dbo<ServiceAgeGroup>
 {
 	public:
+	dbo::ptr<ProviderService> providerService;
+	// 0 3
+	// 3 5 
+	// 5 8
+	// 8 12
+	// 12 15
+	// 15 18
+	// 18 23
+	// 23 30
+	// 30 40
+	// 40 50
+	// 50 more
+	bool zero_three;
+	bool three_five;
+	bool five_eight;
+	bool eight_twelve;
+	bool twelve_fifteen;
+	bool fifteen_eighteen;
+	bool eighteen_twentythree;
+	bool twentythree_thirty;
+	bool thirty_fourty;
+	bool fourty_fifty;
+	bool fifty_more;
 
 	template <class Action>
 	void persist(Action &a)
 	{
+		dbo::belongsTo(a, providerService, "provider_service");
+		dbo::field(a, zero_three, "zero_three");
+		dbo::field(a, three_five, "three_five");
+		dbo::field(a, five_eight, "five_eight");
+		dbo::field(a, eight_twelve, "eight_twelve");
+		dbo::field(a, twelve_fifteen, "twelve_fifteen");
+		dbo::field(a, fifteen_eighteen, "fifteen_eighteen");
+		dbo::field(a, eighteen_twentythree, "eighteen_twentythree");
+		dbo::field(a, twentythree_thirty, "twentythree_thirty");
+		dbo::field(a, thirty_fourty, "thirty_fourty");
+		dbo::field(a, fourty_fifty, "fourty_fifty");
+		dbo::field(a, fifty_more, "fifty_more");
 		
 	}
 };
 
+class ServiceType : public dbo::Dbo<ServiceType>
+{
+	public:
+	dbo::ptr<ProviderService> providerService;
+	// photo video entertainment space_renting other
+	bool photo;
+	bool video;
+	bool entertainment;
+	bool space_renting;
+	bool other;
+
+
+	template <class Action>
+	void persist(Action &a)
+	{
+		dbo::belongsTo(a, providerService, "provider_service");
+		dbo::field(a, photo, "photo");
+		dbo::field(a, video, "video");
+		dbo::field(a, entertainment, "entertainment");
+		dbo::field(a, space_renting, "space_renting");
+		dbo::field(a, other, "other");
+
+	}
+};
 
 class Event : public dbo::Dbo<Event>
 {
 public:
-	dbo::ptr<ProviderClient> provider;
-	dbo::ptr<ProviderClient> client;
+	dbo::ptr<User> user;
 	EventServices eventServices;
 	std::chrono::system_clock::time_point dateTime;
 	double duration;
@@ -275,8 +230,7 @@ public:
 	template <class Action>
 	void persist(Action &a)
 	{
-		dbo::belongsTo(a, provider, "user");
-		dbo::belongsTo(a, client, "user_client");
+		dbo::belongsTo(a, user, "user");
 		dbo::hasMany(a, eventServices, dbo::ManyToOne, "event");
 		dbo::field(a, dateTime, "date_time");
 		dbo::field(a, duration, "duration");
@@ -289,9 +243,8 @@ class EventService : public dbo::Dbo<EventService>
 {
 public:
 	dbo::ptr<Event> event;
-	dbo::ptr<Review> review;
+	dbo::ptr<ProviderService> providerService;
 	std::string providerIdentity;
-	std::string providerService;
 	std::chrono::system_clock::time_point dateTime;
 	double duration;
 	int cost;
@@ -302,9 +255,8 @@ public:
 	void persist(Action &a)
 	{
 		dbo::belongsTo(a, event, "event", dbo::OnDeleteCascade);
-		dbo::belongsTo(a, review, "review");
+		dbo::belongsTo(a, providerService, "provider_service");
 		dbo::field(a, providerIdentity, "provider_identity");
-		dbo::field(a, providerService, "provider_service");
 		dbo::field(a, dateTime, "date_time");
 		dbo::field(a, duration, "duration");
 		dbo::field(a, cost, "cost");
@@ -313,36 +265,36 @@ public:
 	}
 };
 
-
 class Review : public dbo::Dbo<Review>
 {
 	public:
-	dbo::ptr<User> user;
-	dbo::ptr<ProfileService> profileService;
+	dbo::ptr<EventService> eventService;
+	ReviewGalerys reviewGalerys;
 	std::string title;
 	std::string content;
 	int rating;
-	// std::vector<int> reviePhotoIds;
 
 	template <class Action>
 	void persist(Action &a)
 	{
-		dbo::belongsTo(a, user, "user");
-		dbo::belongsTo(a, profileService, "profile_service");
+		dbo::belongsTo(a, eventService, "event_service", dbo::OnDeleteCascade);
+		dbo::hasMany(a, reviewGalerys, dbo::ManyToOne, "review");
 		dbo::field(a, title, "title");
 		dbo::field(a, content, "content");
 		dbo::field(a, rating, "rating");
-		// dbo::field(a, reviePhotoIds, "review_photo_ids");
 	}
 };
 
 class ReviewGalery : public dbo::Dbo<ReviewGalery>
 {
 	public:
+	dbo::ptr<Review> review;
+	std::vector<unsigned char> photo;
 
 	template <class Action>
 	void persist(Action &a)
 	{
-
+		dbo::belongsTo(a, review, "review", dbo::OnDeleteCascade);
+		dbo::field(a, photo, "photo");
 	}
 };

@@ -39,11 +39,26 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	myPasswordService.setAttemptThrottlingEnabled(true);
 
 	// Configure Session
-	session_.mapClass<User>("user");
-	session_.mapClass<UserRole>("user_role");
 	session_.mapClass<AuthInfo>("auth_info");
 	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
 	session_.mapClass<AuthInfo::AuthTokenType>("auth_token");
+
+	session_.mapClass<User>("user");
+	session_.mapClass<UserRole>("user_role");
+
+	session_.mapClass<ProviderProfile>("provider_profile");
+	session_.mapClass<ProviderService>("provider_service");
+	session_.mapClass<ServiceGalery>("Service_galery");
+
+	session_.mapClass<ServiceAgeGroup>("service_age_group");
+	session_.mapClass<ServiceType>("service_type");
+
+	session_.mapClass<Event>("event");
+	session_.mapClass<EventService>("event_service");
+	
+
+	session_.mapClass<Review>("review");
+	session_.mapClass<ReviewGalery>("review_galery");
 
 	users_ = std::make_unique<UserDatabase>(session_);
 	users_->setMaxAuthTokensPerUser(5);
@@ -143,17 +158,7 @@ Emlab::RegistrationResponse AuthInterfaceI::registerUser(Emlab::RegistrationInfo
 	newUserPtr->name = registrationInfo.name;
 	newUserPtr->phone = registrationInfo.phone;
 	newUserPtr->photo = registrationInfo.photo;
-	if(registrationInfo.role == Emlab::CLIENTROLE){
-		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(Emlab::CLIENTROLE);
-		newUserPtr->role = rolePtr;
-	}else if (registrationInfo.role == Emlab::PROVIDERROLE){
-		auto rolePtr = session_.find<UserRole>().where("role = ?").bind(Emlab::PROVIDERROLE);
-		newUserPtr->role = rolePtr;
-	}else if (registrationInfo.role == Emlab::ADMINROLE){
-		std::cout << "\n\n you cannot create a user with Admin Role privilages \n\n";
-	}else {
-		std::cout << "\n\n i dont know, something is broken in registerNewUser \n\n";
-	}
+	newUserPtr->role = session_.find<UserRole>().where("role = ?").bind(Emlab::CLIENTROLE).resultValue();
 	dbo::ptr<User> userPtr = session_.add(std::move(newUserPtr));
 
 	// Crteate a new AuthInfo record and returns a Wt::Auth::User
@@ -250,7 +255,6 @@ Emlab::ImageData AuthInterfaceI::getUserPhotoWithToken(std::string userToken, co
 	transaction.commit();
 	return user->photo;
 }
-
 
 void AuthInterfaceI::setUserPhoto(std::string userToken, Emlab::ImageData photo, const Ice::Current &)
 {
