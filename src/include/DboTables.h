@@ -98,6 +98,7 @@ class ProviderProfile : public dbo::Dbo<ProviderProfile>
 	dbo::ptr<User> user;
 	std::string username;
 	ProviderServices providerServices;
+	std::string description;
 
 	template<class Action>
 	void persist(Action& a)
@@ -105,6 +106,7 @@ class ProviderProfile : public dbo::Dbo<ProviderProfile>
 		dbo::belongsTo(a, user, "user");
 		dbo::field(a, username, "username");
 		dbo::hasMany(a, providerServices, dbo::ManyToOne, "provider_profile");
+		dbo::field(a, description, "description");
 	}
 };
 

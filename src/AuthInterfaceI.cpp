@@ -30,6 +30,7 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	myAuthService.setAuthTokenUpdateEnabled(false);
 	myAuthService.setAuthTokenValidity(300);
 	myAuthService.setEmailVerificationEnabled(true);
+	myAuthService.setIdentityPolicy(Wt::Auth::IdentityPolicy::EmailAddress);
 
 	std::unique_ptr<Wt::Auth::PasswordVerifier> verifier = std::make_unique<Wt::Auth::PasswordVerifier>();
 	verifier->addHashFunction(std::make_unique<Wt::Auth::BCryptHashFunction>(7));
@@ -48,7 +49,7 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 
 	session_.mapClass<ProviderProfile>("provider_profile");
 	session_.mapClass<ProviderService>("provider_service");
-	session_.mapClass<ServiceGalery>("Service_galery");
+	session_.mapClass<ServiceGalery>("service_galery");
 
 	session_.mapClass<ServiceAgeGroup>("service_age_group");
 	session_.mapClass<ServiceType>("service_type");
@@ -60,7 +61,7 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	session_.mapClass<Review>("review");
 	session_.mapClass<ReviewGalery>("review_galery");
 
-	users_ = std::make_unique<UserDatabase>(session_);
+	users_ = std::make_unique<UserDatabase>(session_, &auth());
 	users_->setMaxAuthTokensPerUser(5);
 
 	dbo::Transaction transaction(session_);
@@ -93,24 +94,26 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	transaction.commit();
 }
 
+
+// Login
 Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const Ice::Current &)
 {
 	// RETURNED LoginReturnUserData Obj;
 	Emlab::LoginReturn loginReturn;
 	loginReturn.loginResponse = Emlab::LoginResponse::NotIdentified;
-	loginReturn.name = "";
 	loginReturn.email = loginInfo.email;
-	loginReturn.token = "";
 
 	dbo::Transaction transaction(session_);
 
-	auto user = users().findWithEmail(loginInfo.email);
+	auto user = users_->findWithIdentity(Wt::Auth::Identity::LoginName, loginInfo.email);	
 
 	if (user.isValid())
 	{
 		auto userData = session_.find<User>().where("id = ?").bind(user.id()).resultValue();
 		loginReturn.loginResponse = Emlab::LoginResponse::Identified;
 		loginReturn.name = userData->name;
+		loginReturn.phone = userData->phone;
+		std::cout << "\n\n\n\n user phone :" << userData->phone << "\n\n\n\n";
 		loginReturn.role = userData->role->role;
 		std::cout << "\n\n ------------------ USER FOUND ------------------ \n\n";
 		auto passwordResult = myPasswordService.verifyPassword(user, loginInfo.password);
@@ -128,7 +131,8 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 		else if (passwordResult == Wt::Auth::PasswordResult::PasswordValid)
 		{
 			std::cout << "\n\n ------------------ PASSWORD VALID ------------------ \n\n";
-			loginReturn.token = auth().createAuthToken(user);
+			auto token_string = myAuthService.createAuthToken(user);
+			loginReturn.token = token_string;
 			loginReturn.loginResponse = Emlab::LoginResponse::LoggedIn;
 		}
 	}
@@ -141,8 +145,10 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 	return loginReturn;
 }
 
+// Registration
 Emlab::RegistrationResponse AuthInterfaceI::registerUser(Emlab::RegistrationInfo registrationInfo, const Ice::Current &)
 {
+	std::cout << "\n\n ------------------ REGISTER USER ------------------ \n\n";
 	dbo::Transaction transaction(session_);
 
 	auto userFoundByEmail = users_->findWithEmail(registrationInfo.email);
@@ -158,21 +164,29 @@ Emlab::RegistrationResponse AuthInterfaceI::registerUser(Emlab::RegistrationInfo
 	newUserPtr->name = registrationInfo.name;
 	newUserPtr->phone = registrationInfo.phone;
 	newUserPtr->photo = registrationInfo.photo;
+	newUserPtr->joinDate = Wt::WDateTime::currentDateTime().toTimePoint();
 	newUserPtr->role = session_.find<UserRole>().where("role = ?").bind(Emlab::CLIENTROLE).resultValue();
+	
+	if(!registrationInfo.photo.empty())
+		newUserPtr->photo = registrationInfo.photo;
 	dbo::ptr<User> userPtr = session_.add(std::move(newUserPtr));
 
 	// Crteate a new AuthInfo record and returns a Wt::Auth::User
 	auto newUser = users_->registerNew();
-	auto userInfo = users_->find(newUser);
-	userInfo.modify()->setUser(userPtr);
-	newUser.setIdentity(Wt::Auth::Identity::LoginName, registrationInfo.email);
+	users_->setIdentity(newUser, Wt::Auth::Identity::LoginName, registrationInfo.email);
 	newUser.setEmail(registrationInfo.email);
+	auto userInfo = users_->find(newUser);
+
+	userInfo.modify()->setUser(userPtr);
+	// newUser.setIdentity(Wt::Auth::Identity::LoginName, registrationInfo.email);
 	myPasswordService.updatePassword(newUser, registrationInfo.password);
 	transaction.commit();
+	std::cout << "\n\n ------------------ REGISTER USER DONE ------------------ \n\n";
 
 	return Emlab::RegistrationResponse::RegistrationSuccessful;
 }
 
+// get user id or name from token
 std::string AuthInterfaceI::processUserTokenForName(std::string userToken)
 {
 	std::string userName;
@@ -197,6 +211,7 @@ int AuthInterfaceI::processUserTokenForId(std::string userToken)
 	return userId;
 }
 
+// Change Password
 Emlab::ChangePasswordResponse AuthInterfaceI::changePassword(std::string userToken, std::string oldPassword, std::string newPassword, const Ice::Current &)
 {
 	Emlab::ChangePasswordResponse changePasswordResponse = Emlab::ChangePasswordResponse::PasswordNotChanged;
@@ -228,6 +243,95 @@ Emlab::ChangePasswordResponse AuthInterfaceI::changePassword(std::string userTok
 	return changePasswordResponse;
 }
 
+
+// client11@gmail.com
+
+Emlab::ChangeUniqueDataResponse AuthInterfaceI::changeEmail(std::string userToken, std::string newEmail, const Ice::Current &)
+{
+	std::cout << "\n\n change email started \n";
+	Emlab::ChangeUniqueDataResponse changeEmailResponse;
+	dbo::Transaction transaction(session_);
+	auto userFoundByEmail = users_->findWithEmail(newEmail);
+	if (userFoundByEmail.isValid())
+	{
+		std::cout << "\n\n User Email Alredy exists in dbo \n\n";
+		return Emlab::ChangeUniqueDataResponse::AllreadyExists;
+	}
+	std::cout << "\n\nchange email PASSED checking if other accounts have the same email\n\n";
+	auto user = myAuthService.processAuthToken(userToken, users()).user();
+
+	if(!user.isValid()){
+		std::cout << "\n\nchange email USER NOT VALID \n\n";
+		return Emlab::ChangeUniqueDataResponse::NotChanged;
+	}
+	users_->setEmail(user, newEmail);
+	users_->setIdentity(user, Wt::Auth::Identity::LoginName, newEmail);
+	changeEmailResponse = Emlab::ChangeUniqueDataResponse::Changed;
+	std::cout << "\n\n before transaction comit \n\n";
+	transaction.commit();
+	std::cout << "\n\n after transaction comit \n\n";
+	return changeEmailResponse;
+}
+
+Emlab::ChangeUniqueDataResponse AuthInterfaceI::changePhone(std::string userToken, std::string newPhone, const Ice::Current &)
+{
+	Emlab::ChangeUniqueDataResponse changePhoneResponse;
+	dbo::Transaction transaction(session_);
+	auto user = session_.find<User>().where("id = ?").bind(processUserTokenForId(userToken)).resultValue();
+	if (!user)
+	{
+		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
+		return changePhoneResponse;
+	}
+	user.modify()->phone = newPhone;
+	changePhoneResponse = Emlab::ChangeUniqueDataResponse::Changed;
+	transaction.commit();
+	return changePhoneResponse;
+}
+
+void AuthInterfaceI::setName(std::string userToken, std::string newName, const Ice::Current &)
+{
+
+	dbo::Transaction transaction(session_);
+	auto userResult = myAuthService.processAuthToken(userToken, users()).user();
+
+	if (!userResult.isValid()){
+		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
+	}
+	
+	auto user = users_->find(userResult)->user();
+	user.modify()->name = newName;
+	transaction.commit();
+}
+    
+void AuthInterfaceI::setDarkMode(std::string userToken, bool darkMode, const Ice::Current &)
+{
+	dbo::Transaction transaction(session_);
+	auto user = session_.find<User>().where("id = ?").bind(processUserTokenForId(userToken)).resultValue();
+	if (!user)
+	{
+		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
+		return;
+	}
+	user.modify()->darkMode = darkMode;
+	transaction.commit();
+}
+
+void AuthInterfaceI::setUserPhoto(std::string userToken, Emlab::ImageData photo, const Ice::Current &)
+{
+	dbo::Transaction transaction(session_);
+	auto userId = processUserTokenForId(userToken);
+	auto user = session_.find<User>().where("id = ?").bind(userId).resultValue();
+	if (!user)
+	{
+		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
+		return;
+	}
+	user.modify()->photo = photo;
+	transaction.commit();
+}
+
+// Get User Info
 Emlab::ImageData AuthInterfaceI::getUserPhotoWithEmail(std::string userEmail, const Ice::Current &)
 {
 	dbo::Transaction transaction(session_);
@@ -256,20 +360,7 @@ Emlab::ImageData AuthInterfaceI::getUserPhotoWithToken(std::string userToken, co
 	return user->photo;
 }
 
-void AuthInterfaceI::setUserPhoto(std::string userToken, Emlab::ImageData photo, const Ice::Current &)
-{
-	dbo::Transaction transaction(session_);
-	auto userId = processUserTokenForId(userToken);
-	auto user = session_.find<User>().where("id = ?").bind(userId).resultValue();
-	if (!user)
-	{
-		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
-		return;
-	}
-	user.modify()->photo = photo;
-	transaction.commit();
-}
-
+// ...
 Wt::Auth::AbstractUserDatabase &AuthInterfaceI::users()
 {
 	return *users_;
