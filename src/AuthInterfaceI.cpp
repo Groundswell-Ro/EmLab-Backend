@@ -102,7 +102,7 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 	Emlab::LoginReturn loginReturn;
 	loginReturn.loginResponse = Emlab::LoginResponse::NotIdentified;
 	loginReturn.email = loginInfo.email;
-
+	loginReturn.darkMode = false;
 	dbo::Transaction transaction(session_);
 
 	auto user = users_->findWithIdentity(Wt::Auth::Identity::LoginName, loginInfo.email);	
@@ -113,7 +113,7 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 		loginReturn.loginResponse = Emlab::LoginResponse::Identified;
 		loginReturn.name = userData->name;
 		loginReturn.phone = userData->phone;
-		std::cout << "\n\n\n\n user phone :" << userData->phone << "\n\n\n\n";
+		loginReturn.darkMode = userData->darkMode;
 		loginReturn.role = userData->role->role;
 		std::cout << "\n\n ------------------ USER FOUND ------------------ \n\n";
 		auto passwordResult = myPasswordService.verifyPassword(user, loginInfo.password);
@@ -142,6 +142,34 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 	}
 
 	transaction.commit();
+	std::cout << "\n\n\n ------------------ RETURNING LOGIN RETURN ------------------ \n\n";
+	std::cout << "name: " << loginReturn.name << "\n";
+	std::cout << "phone: " << loginReturn.phone << "\n";
+	std::cout << "email: " << loginReturn.email << "\n";
+	std::cout << "role: " << loginReturn.role << "\n";
+	std::cout << "token: " << loginReturn.token << "\n";
+	// std::cout << "darkMode: " << loginReturn.darkMode << "\n";
+	switch(loginReturn.loginResponse)
+	{
+		case Emlab::LoginResponse::NotIdentified:
+			std::cout << "loginResponse: NotIdentified\n";
+			break;
+		case Emlab::LoginResponse::Identified:
+			std::cout << "loginResponse: Identified\n";
+			break;
+		case Emlab::LoginResponse::IncorectPassword:
+			std::cout << "loginResponse: IncorectPassword\n";
+			break;
+		case Emlab::LoginResponse::ThrottlingActivated:
+			std::cout << "loginResponse: ThrottlingActivated\n";
+			break;
+		case Emlab::LoginResponse::LoggedIn:
+			std::cout << "loginResponse: LoggedIn\n";
+			break;
+		default:
+			std::cout << "loginResponse: default\n";
+			break;
+	}
 	return loginReturn;
 }
 
@@ -165,6 +193,7 @@ Emlab::RegistrationResponse AuthInterfaceI::registerUser(Emlab::RegistrationInfo
 	newUserPtr->phone = registrationInfo.phone;
 	newUserPtr->photo = registrationInfo.photo;
 	newUserPtr->joinDate = Wt::WDateTime::currentDateTime().toTimePoint();
+	newUserPtr->darkMode = false;
 	newUserPtr->role = session_.find<UserRole>().where("role = ?").bind(Emlab::CLIENTROLE).resultValue();
 	
 	if(!registrationInfo.photo.empty())

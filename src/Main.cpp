@@ -38,8 +38,8 @@ int main(int argc, char *argv[])
 	try
 	{
 		Ice::CommunicatorHolder ich(argc, argv);
+		ich->getProperties()->setProperty("Ice.MessageSizeMax", "2097152");
 		auto adapter = ich->createObjectAdapterWithEndpoints(comAdapter, comConnection);
-
 		// Interfaces HERE
 		auto authServant = std::make_shared<AuthInterfaceI>(std::move(fixedConnPool->getConnection()));
 		auto eventServant = std::make_shared<EventInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
