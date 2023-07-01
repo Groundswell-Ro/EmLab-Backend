@@ -100,9 +100,10 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 {
 	// RETURNED LoginReturnUserData Obj;
 	Emlab::LoginReturn loginReturn;
+
 	loginReturn.loginResponse = Emlab::LoginResponse::NotIdentified;
-	loginReturn.email = loginInfo.email;
-	loginReturn.darkMode = false;
+	loginReturn.userInfo.email = loginInfo.email;
+	loginReturn.userInfo.darkMode = false;
 	dbo::Transaction transaction(session_);
 
 	auto user = users_->findWithIdentity(Wt::Auth::Identity::LoginName, loginInfo.email);	
@@ -111,10 +112,10 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 	{
 		auto userData = session_.find<User>().where("id = ?").bind(user.id()).resultValue();
 		loginReturn.loginResponse = Emlab::LoginResponse::Identified;
-		loginReturn.name = userData->name;
-		loginReturn.phone = userData->phone;
-		loginReturn.darkMode = userData->darkMode;
-		loginReturn.role = userData->role->role;
+		loginReturn.userInfo.name = userData->name;
+		loginReturn.userInfo.phone = userData->phone;
+		loginReturn.userInfo.darkMode = userData->darkMode;
+		loginReturn.userInfo.role = userData->role->role;
 		std::cout << "\n\n ------------------ USER FOUND ------------------ \n\n";
 		auto passwordResult = myPasswordService.verifyPassword(user, loginInfo.password);
 
@@ -143,10 +144,10 @@ Emlab::LoginReturn AuthInterfaceI::loginUser(Emlab::LoginInfo loginInfo, const I
 
 	transaction.commit();
 	std::cout << "\n\n\n ------------------ RETURNING LOGIN RETURN ------------------ \n\n";
-	std::cout << "name: " << loginReturn.name << "\n";
-	std::cout << "phone: " << loginReturn.phone << "\n";
-	std::cout << "email: " << loginReturn.email << "\n";
-	std::cout << "role: " << loginReturn.role << "\n";
+	std::cout << "name: " << loginReturn.userInfo.name << "\n";
+	std::cout << "phone: " << loginReturn.userInfo.phone << "\n";
+	std::cout << "email: " << loginReturn.userInfo.email << "\n";
+	std::cout << "role: " << loginReturn.userInfo.role << "\n";
 	std::cout << "token: " << loginReturn.token << "\n";
 	// std::cout << "darkMode: " << loginReturn.darkMode << "\n";
 	switch(loginReturn.loginResponse)
