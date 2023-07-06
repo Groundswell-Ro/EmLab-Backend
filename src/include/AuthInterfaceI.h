@@ -28,12 +28,13 @@ public:
 	virtual Emlab::ImageData getUserPhotoWithToken(std::string userToken, const Ice::Current &) override;
 
     int processUserTokenForId(std::string userToken);
+    int processUserIdentityForId(std::string userIdentity);
     std::string processUserTokenForName(std::string userToken);
 
     Wt::Auth::AbstractUserDatabase &users();
     static const Wt::Auth::AuthService &auth();
     static const Wt::Auth::AbstractPasswordService &passwordAuth();
-
+    void setUserRole(std::string userId, std::string userRole);
 private:
     Wt::Dbo::Session session_;
     std::unique_ptr<UserDatabase> users_;

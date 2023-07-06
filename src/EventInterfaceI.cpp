@@ -14,6 +14,10 @@ EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::
 	: authInterface_(authInterface)
 {
 	session_.setConnection(std::move(conn));
+	session_.mapClass<AuthInfo>("auth_info");
+	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
+	session_.mapClass<AuthInfo::AuthTokenType>("auth_token");
+
 	session_.mapClass<User>("user");
 	session_.mapClass<UserRole>("user_role");
 
@@ -30,22 +34,6 @@ EventInterfaceI::EventInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::
 
 	session_.mapClass<Review>("review");
 	session_.mapClass<ReviewGalery>("review_galery");
-
-	dbo::Transaction transaction(session_);
-	try
-	{
-		session_.createTables();
-
-	}
-	catch (dbo::Exception &e)
-	{
-		Wt::log("info") << e.what();
-	}
-	catch (...)
-	{
-		Wt::log("info") << "other exception throw ------- mesage from AUTH session";
-	}
-	transaction.commit();
 
 }
 

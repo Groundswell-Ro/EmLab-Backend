@@ -39,6 +39,8 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	myPasswordService.setStrengthValidator(std::make_unique<Wt::Auth::PasswordStrengthValidator>());
 	myPasswordService.setAttemptThrottlingEnabled(true);
 
+
+
 	// Configure Session
 	session_.mapClass<AuthInfo>("auth_info");
 	session_.mapClass<AuthInfo::AuthIdentityType>("auth_identity");
@@ -69,7 +71,7 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 	{
 		session_.createTables();
 		// add user roles to the user_roles table
-		Wt::log("info") << "Database created | mesage from Event session";
+		Wt::log("info") << "\n\n" << "Database created | mesage from Auth session";
 		std::unique_ptr<UserRole> adminRole{new UserRole()};
 		std::unique_ptr<UserRole> clientRole{new UserRole()};
 		std::unique_ptr<UserRole> organizerRole{new UserRole()};
@@ -82,16 +84,26 @@ AuthInterfaceI::AuthInterfaceI(std::unique_ptr<dbo::SqlConnection> conn)
 		dbo::ptr<UserRole> clientRolePtr = session_.add(std::move(clientRole));
 		dbo::ptr<UserRole> organizerRolePtr = session_.add(std::move(organizerRole));
 
+		// create a user
+		Emlab::RegistrationInfo registrationInfo;
+		registrationInfo.name = "client one";
+		registrationInfo.email = "client1@gmail.com";
+		registrationInfo.phone = "1234567890";
+		registrationInfo.password = "asdfghj1";
+		registerUser(registrationInfo, Ice::Current());
+
 	}
 	catch (dbo::Exception &e)
 	{
-		Wt::log("info") << e.what();
+		Wt::log("info") << "\n\n" << e.what();
 	}
 	catch (...)
 	{
-		Wt::log("info") << "other exception throw ------- mesage from AUTH session";
+		Wt::log("info") << "\n\nother exception throw ------- mesage from AUTH session";
 	}
 	transaction.commit();
+
+
 }
 
 
@@ -241,6 +253,18 @@ int AuthInterfaceI::processUserTokenForId(std::string userToken)
 	return userId;
 }
 
+int AuthInterfaceI::processUserIdentityForId(std::string userIdentity)
+{
+	int userId = 0;
+	dbo::Transaction transaction(session_);
+
+	auto user = users_->findWithEmail(userIdentity);
+	userId = std::stoi(user.id());
+
+	transaction.commit();
+	return userId;
+}
+
 // Change Password
 Emlab::ChangePasswordResponse AuthInterfaceI::changePassword(std::string userToken, std::string oldPassword, std::string newPassword, const Ice::Current &)
 {
@@ -273,8 +297,6 @@ Emlab::ChangePasswordResponse AuthInterfaceI::changePassword(std::string userTok
 	return changePasswordResponse;
 }
 
-
-// client11@gmail.com
 
 Emlab::ChangeUniqueDataResponse AuthInterfaceI::changeEmail(std::string userToken, std::string newEmail, const Ice::Current &)
 {
@@ -406,3 +428,23 @@ const Wt::Auth::AbstractPasswordService &AuthInterfaceI::passwordAuth()
 	return myPasswordService;
 }
 
+void AuthInterfaceI::setUserRole(std::string userId, std::string userRole)
+{
+	std::cout << "\n\n setUserRole() started \n\n";
+	Wt::Dbo::Transaction transaction(session_);
+
+
+	auto user = users_->findWithId(userId);
+	if(!user.isValid())
+	{
+		std::cout << "\n\n ------------------ USER NOT FOUND ------------------ \n\n";
+		return;
+	}
+	auto authInfo = users_->find(user);
+	auto userPtr = authInfo->user();
+	auto role = session_.find<UserRole>().where("role = ?").bind(userRole);
+	userPtr.modify()->role = role;
+	
+	transaction.commit();
+	std::cout << "\n\n setUserRole() ended \n\n";
+}

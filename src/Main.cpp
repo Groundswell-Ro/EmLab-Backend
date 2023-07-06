@@ -1,8 +1,6 @@
 #include "include/AuthInterfaceI.h"
 #include "include/EventInterfaceI.h"
-// #include "include/ClientInterfaceI.h"
-// #include "include/ServiceInterfaceI.h"
-#include "include/ReviewInterfaceI.h"
+#include "include/ProviderInterfaceI.h"
 
 #include <Wt/Dbo/FixedSqlConnectionPool.h>
 #include <Wt/Dbo/backend/Sqlite3.h>
@@ -38,21 +36,17 @@ int main(int argc, char *argv[])
 	try
 	{
 		Ice::CommunicatorHolder ich(argc, argv);
-		ich->getProperties()->setProperty("Ice.MessageSizeMax", "2097152");//2gb in kb
+		// ich->getProperties()->setProperty("Ice.MessageSizeMax", "2097152");//2gb in kb
 		auto adapter = ich->createObjectAdapterWithEndpoints(comAdapter, comConnection);
 		// Interfaces HERE
 		auto authServant = std::make_shared<AuthInterfaceI>(std::move(fixedConnPool->getConnection()));
 		auto eventServant = std::make_shared<EventInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
-		// auto clientServant = std::make_shared<ClientInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
-		// auto serviceServant = std::make_shared<ServiceInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
-		// auto reviewServant = std::make_shared<ReviewInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
+		auto providerServant = std::make_shared<ProviderInterfaceI>(std::move(fixedConnPool->getConnection()), authServant);
 		
 		// Add Servants to the adaptor
 		adapter->add(authServant, Ice::stringToIdentity(AUTHADAPTER));
 		adapter->add(eventServant, Ice::stringToIdentity(EVENTADAPTER));
-		// adapter->add(clientServant, Ice::stringToIdentity(CLIENTADAPTER));
-		// adapter->add(serviceServant, Ice::stringToIdentity(SERVICEADAPTER));
-		// adapter->add(reviewServant, Ice::stringToIdentity(REVIEWADAPTER));
+		adapter->add(providerServant, Ice::stringToIdentity(PROVIDERADAPTER));
 
 		adapter->activate();
 		ich->waitForShutdown();

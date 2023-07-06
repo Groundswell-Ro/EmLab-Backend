@@ -12,10 +12,16 @@ class ProviderInterfaceI : public Emlab::ProviderInterface
 public:
 	ProviderInterfaceI(std::unique_ptr<dbo::SqlConnection> conn, std::shared_ptr<AuthInterfaceI> authInterface);
 
-		virtual void setProviderProfile(string email, ProfileData profileData, const Ice::Current &) override;
+		virtual int registerProvider(string userToken, ProviderProfileInfo providerProfileInfo, const Ice::Current &) override;
+		virtual int registerProviderService(string userToken, ProviderServiceInfo providerServiceInfo, const Ice::Current &) override;
+		virtual void addPhotoToService(string userToken, int serviceId, ImageInfo imageInfo, const Ice::Current &) override;
 
-        virtual ProviderProfileInfo getProfileInfo(string email, const Ice::Current &) override;
-		virtual ProfileData getProfileData(string email, const Ice::Current &) override;
+		virtual ImageData getProviderProfilePhoto(int profileId, const Ice::Current &) override;
+        virtual Emlab::ProviderProfileInfo getProfileAsUser(string userToken, const Ice::Current &) override;
+        virtual Emlab::ProviderProfileInfo getProfileAsClient(int profileId, const Ice::Current &) override;
+		virtual SeqProviderServiceInfo getSeqProviderServices(int profileId, const Ice::Current &) override;
+		virtual ImageInfo getProviderServicePhoto(int servicePhotoId, const Ice::Current &) override;
+
 private:
 	Wt::Dbo::Session session_;
 	std::shared_ptr<AuthInterfaceI> authInterface_;

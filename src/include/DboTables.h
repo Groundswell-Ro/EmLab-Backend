@@ -119,7 +119,7 @@ public:
 	dbo::weak_ptr<ServiceType> serviceType;
 	std::string title;
 	std::string description;
-	std::string price;
+	int price;
 
 	template <class Action>
 	void persist(Action &a)
@@ -138,12 +138,14 @@ class ServiceGalery : public dbo::Dbo<ServiceGalery>
 {
 	public:
 	dbo::ptr<ProviderService> providerService;
+	std::string photoName;
 	std::vector<unsigned char> photo;
 
 	template <class Action>
 	void persist(Action &a)
 	{
 		dbo::belongsTo(a, providerService, "provider_service");
+		dbo::field(a, photoName, "photo_name");
 		dbo::field(a, photo, "photo");
 	}
 };
@@ -292,11 +294,13 @@ class ReviewGalery : public dbo::Dbo<ReviewGalery>
 	public:
 	dbo::ptr<Review> review;
 	std::vector<unsigned char> photo;
+	std::string photoName;
 
 	template <class Action>
 	void persist(Action &a)
 	{
 		dbo::belongsTo(a, review, "review", dbo::OnDeleteCascade);
 		dbo::field(a, photo, "photo");
+		dbo::field(a, photoName, "photo_name");
 	}
 };
